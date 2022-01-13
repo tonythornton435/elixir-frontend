@@ -1,0 +1,9 @@
+{
+	"appId": "com.elixirlabs.elixir",
+	"appName": "Elixir",
+	"webDir": "public",
+	"bundledWebRuntime": false,
+	"server": {
+		"cleartext": true
+	}
+}
