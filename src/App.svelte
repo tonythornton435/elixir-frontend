@@ -1,10 +1,10 @@
 <script lang="ts">
+  import Router from "svelte-spa-router";
+
   import Home from "./Home.svelte";
   import Login from "./Login.svelte";
   import SignUp from "./SignUp.svelte";
   import NotFound from "./NotFound.svelte";
-
-  import Router from "svelte-spa-router";
 
   const routes = {
     "/": Home,
@@ -14,12 +14,6 @@
   };
 </script>
 
-<main>
+<main class="flex h-screen">
   <Router {routes} />
 </main>
-
-<style global lang="postcss">
-  @tailwind base;
-  @tailwind components;
-  @tailwind utilities;
-</style>
