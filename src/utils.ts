@@ -1,4 +1,5 @@
 import { get } from "svelte/store";
+import { Storage } from "@capacitor/storage";
 
 import { user } from "./stores";
 import { API_BASE_URL } from "./constants";
@@ -23,7 +24,7 @@ export async function apiCall(
     requestObj["body"] = body;
   }
 
-  console.log(requestObj);
+  console.log(userObj);
 
   await fetch(API_BASE_URL + endpoint, requestObj).then(async (res) => {
     const result = await res.json();
@@ -31,4 +32,9 @@ export async function apiCall(
     if (result["status"] === "success") successCallback(result);
     else failureCallback(result);
   });
+}
+
+async function logout() {
+  await Storage.remove({ key: "user" });
+  $user = null;
 }

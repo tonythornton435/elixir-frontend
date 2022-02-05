@@ -15,8 +15,9 @@
       "POST",
       async (result) => {
         loginFailed = false;
-        let token_claims = jwt_decode(result["data"]["token"]);
-        let auth_user = { user: result["data"]["user"], token: token_claims };
+        let token = jwt_decode(result["data"]["token"]);
+        token["rawToken"] = result["data"]["token"];
+        let auth_user = { user: result["data"]["user"], token };
         user.set(Promise.resolve(auth_user));
         await Storage.set({
           key: "user",

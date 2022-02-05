@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { link } from "svelte-spa-router";
+  import { link, push } from "svelte-spa-router";
+
+  import { apiCall } from "./utils";
 
   let email: string,
     password: string,
@@ -10,11 +12,49 @@
     gender: string,
     dateOfBirth: string,
     phoneNumber: string;
+  let passwordsMatch: boolean = true;
 
-  async function handleSubmit() {}
+  window.addEventListener("load", () => {
+    document.getElementById("dateOfBirth").max = new Date()
+      .toISOString()
+      .split("T")[0];
+  });
+
+  async function handleSubmit() {
+    passwordsMatch = password === passwordConfirmation;
+    if (!passwordsMatch) return;
+
+    await apiCall(
+      "auth/register/",
+      "POST",
+      async (result) => {
+        console.log(result);
+        push("/login");
+      },
+      (result) => {
+        console.log(result);
+      },
+      JSON.stringify({
+        email,
+        password,
+        first_name: firstName,
+        surname,
+        national_id: nationalID,
+        gender: gender,
+        date_of_birth: dateOfBirth,
+        phone_number: phoneNumber,
+      })
+    );
+  }
 </script>
 
 <div class="m-auto">
+  <img
+    src="/assets/undraw_welcome_re_h3d9.svg"
+    class="px-8 my-4 w-full max-w-lg"
+    alt="Signup welcome"
+  />
+
   <form on:submit|preventDefault={handleSubmit} class="w-full max-w-lg">
     <div class="flex flex-wrap">
       <div class="w-full px-3">
@@ -117,6 +157,22 @@
         />
       </div>
     </div>
+    <div class="w-full px-3">
+      <label
+        class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+        for="phoneNumber"
+      >
+        Phone Number
+      </label>
+      <input
+        bind:value={phoneNumber}
+        class="input-primary"
+        type="tel"
+        id="phoneNumber"
+        placeholder="+254712345678"
+        required
+      />
+    </div>
     <div class="flex flex-wrap">
       <div class="w-full px-3">
         <label
@@ -127,7 +183,9 @@
         </label>
         <input
           bind:value={password}
-          class="input-primary"
+          class="input"
+          class:border-red-500={!passwordsMatch}
+          class:focus:border-red-500={!passwordsMatch}
           id="password"
           type="password"
           placeholder="****************"
@@ -145,25 +203,47 @@
         </label>
         <input
           bind:value={passwordConfirmation}
-          class="input-primary"
+          class="input"
+          class:border-red-500={!passwordsMatch}
+          class:focus:border-red-500={!passwordsMatch}
           id="passwordConfirmation"
           type="password"
           placeholder="****************"
           required
         />
+        {#if !passwordsMatch}
+          <p class="text-red-600 ml-2 mb-4 text-xs">Passwords do not match.</p>
+        {/if}
       </div>
     </div>
-    <div>
-      <div class="datepicker relative form-floating mb-3 xl:w-96">
-        <input
-          type="text"
-          class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-          placeholder="Select a date"
-        />
-        <label for="floatingInput" class="text-gray-700">Select a date</label>
-      </div>
+    <div class="w-full px-3">
+      <label
+        class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+        for="passwordConfirmation"
+      >
+        Date of Birth
+      </label>
+      <input
+        bind:value={dateOfBirth}
+        class="input-primary"
+        type="date"
+        id="dateOfBirth"
+        placeholder="Select a date"
+        required
+      />
+    </div>
+    <div class="flex flex-wrap mx-4 my-1">
+      <button class="btn-primary w-full" type="submit">Sign Up</button>
+    </div>
+    <div class="relative flex py-5 items-center mx-4">
+      <div class="flex-grow border-t border-gray-400" />
+      <span class="flex-shrink mx-4 text-gray-400">OR</span>
+      <div class="flex-grow border-t border-gray-400" />
+    </div>
+    <div class="flex mx-4 my-1">
+      <button class="btn-primary w-full">
+        <a href="/login" use:link>Sign In</a>
+      </button>
     </div>
   </form>
-
-  <a href="/login" use:link class="btn-primary">Login</a>
 </div>
