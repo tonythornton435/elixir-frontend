@@ -4,13 +4,10 @@ module.exports = {
     purgeLayersByDefault: true,
     removeDeprecatedGapUtilities: true,
   },
-  plugins: [
-
-  ],
+  plugins: [],
   purge: {
     content: [
       "./src/**/*.svelte",
-
     ],
     enabled: production // disable purge in dev
   },

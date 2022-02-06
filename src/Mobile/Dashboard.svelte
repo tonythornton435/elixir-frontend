@@ -20,17 +20,17 @@
 
     <section class="block fixed inset-x-0 bottom-0 z-10 bg-white shadow">
       <div class="flex justify-between">
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1" on:click={() => tab=Providers}>
+        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=Providers}>
           <div class="inline-block">
             <Icon path={mdiHospitalBox} />
           </div>
           <span class="tab tab-home block text-xs">Providers</span>
         </div>
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1" on:click={() => tab=Home}>
+        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=Home}>
           <div class="inline-block"><Icon path={mdiHome} color="black" /></div>
           <span class="tab tab-home block text-xs">Home</span>
         </div>
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1" on:click={() => tab=VisitHistory}>
+        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=VisitHistory}>
           <div class="inline-block">
             <Icon path={mdiFileDocumentMultiple} />
           </div>
