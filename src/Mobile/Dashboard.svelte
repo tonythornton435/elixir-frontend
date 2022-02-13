@@ -18,26 +18,31 @@
   {#if user !== null}
     <svelte:component this={tab} />
 
-    <section class="block fixed inset-x-0 bottom-0 z-10 bg-white shadow">
-      <div class="flex justify-between">
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=Providers}>
-          <div class="inline-block">
-            <Icon path={mdiHospitalBox} />
-          </div>
-          <span class="tab tab-home block text-xs">Providers</span>
-        </div>
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=Home}>
-          <div class="inline-block"><Icon path={mdiHome} color="black" /></div>
-          <span class="tab tab-home block text-xs">Home</span>
-        </div>
-        <div class="w-full justify-center inline-block text-center pt-2 pb-1 hover:cursor-pointer" on:click={() => tab=VisitHistory}>
-          <div class="inline-block">
-            <Icon path={mdiFileDocumentMultiple} />
-          </div>
-          <span class="tab tab-home block text-xs">Visit History</span>
-        </div>
+    <nav class="navbar is-link is-fixed-bottom" role="navigation">
+      <div class="navbar-brand">
+        <a
+          class="navbar-item is-expanded is-block has-text-centered"
+          on:click={() => (tab = Providers)}
+        >
+          <Icon path={mdiHospitalBox} />
+          <p class="is-size-7">Providers</p>
+        </a>
+        <a
+          class="navbar-item is-expanded is-block has-text-centered"
+          on:click={() => (tab = Home)}
+        >
+          <Icon path={mdiHome} />
+          <p class="is-size-7">Home</p>
+        </a>
+        <a
+          class="navbar-item is-expanded is-block has-text-centered"
+          on:click={() => (tab = VisitHistory)}
+        >
+          <Icon path={mdiFileDocumentMultiple} />
+          <p class="is-size-7">Records</p>
+        </a>
       </div>
-    </section>
+    </nav>
   {:else}
     {replace("/login")}
   {/if}

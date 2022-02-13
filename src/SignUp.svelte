@@ -1,5 +1,18 @@
 <script lang="ts">
   import { link, push } from "svelte-spa-router";
+  import Icon from "mdi-svelte";
+  import {
+    mdiEmail,
+    mdiFaceMan,
+    mdiHumanMaleFemaleChild,
+    mdiIdCard,
+    mdiPhone,
+    mdiAccountLock,
+    mdiAlertCircle,
+    mdiBaby,
+    mdiFaceWoman,
+    mdiCheckAll,
+  } from "@mdi/js";
 
   import { apiCall } from "./utils";
 
@@ -12,12 +25,12 @@
     gender: string,
     dateOfBirth: string,
     phoneNumber: string;
-  let passwordsMatch: boolean = true;
+  let passwordsMatch = true,
+    signUpFailed = false;
 
   window.addEventListener("load", () => {
-    document.getElementById("dateOfBirth").max = new Date()
-      .toISOString()
-      .split("T")[0];
+    (document.getElementById("dateOfBirth") as HTMLInputElement).max =
+      new Date().toISOString().split("T")[0];
   });
 
   async function handleSubmit() {
@@ -28,12 +41,9 @@
       "auth/register/",
       "POST",
       async (result) => {
-        console.log(result);
         push("/login");
       },
-      (result) => {
-        console.log(result);
-      },
+      () => (signUpFailed = true),
       JSON.stringify({
         email,
         password,
@@ -48,202 +58,199 @@
   }
 </script>
 
-<div class="m-auto">
-  <img
-    src="/assets/undraw_welcome_re_h3d9.svg"
-    class="px-8 my-4 w-full max-w-lg"
-    alt="Signup welcome"
-  />
+<div class="container is-fluid mt-6 mb-4">
+  <form on:submit|preventDefault={handleSubmit}>
+    <div class="columns is-flex is-centered">
+      <figure class="image">
+        <img
+          src="/assets/undraw_welcome_re_h3d9.svg"
+          alt="Signup welcome"
+          style="width:256px;height:auto;"
+        />
+      </figure>
+    </div>
 
-  <form on:submit|preventDefault={handleSubmit} class="w-full max-w-lg">
-    <div class="flex flex-wrap">
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="firstName"
-        >
-          First Name
-        </label>
+    {#if signUpFailed}
+      <div class="notification is-danger">
+        Failed. The email is <strong>probably</strong> taken, lol.
+      </div>
+    {/if}
+
+    <div class="field">
+      <label class="label" for="firstName">First Name</label>
+      <div class="control has-icons-left">
         <input
           bind:value={firstName}
-          class="input-primary"
-          id="firstName"
+          class="input"
           type="text"
+          id="firstName"
           placeholder="Jane"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiFaceMan} />
+        </span>
       </div>
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="surname"
-        >
-          Surname
-        </label>
+    </div>
+    <div class="field">
+      <label class="label" for="surname">Surname</label>
+      <div class="control has-icons-left">
         <input
           bind:value={surname}
-          class="input-primary"
-          id="surname"
+          class="input"
           type="text"
+          id="surname"
           placeholder="Doe"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiHumanMaleFemaleChild} />
+        </span>
       </div>
     </div>
-    <div class="flex flex-wrap mb-3">
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="nationalID"
-        >
-          National ID number
-        </label>
+    <div class="field">
+      <label class="label" for="nationalID">National ID</label>
+      <div class="control has-icons-left">
         <input
           bind:value={nationalID}
-          class="input-primary"
-          id="nationalID"
+          class="input"
           type="text"
+          id="nationalID"
           placeholder="12345678"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiIdCard} />
+        </span>
       </div>
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="gender"
-        >
-          Gender
-        </label>
-        <div class="relative">
-          <select
-            bind:value={gender}
-            class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="gender"
-          >
+    </div>
+    <div class="field">
+      <label class="label" for="email">Email Address</label>
+      <div class="control has-icons-left">
+        <input
+          bind:value={email}
+          class="input"
+          type="email"
+          id="email"
+          placeholder="jane.doe@example.com"
+          required
+        />
+        <span class="icon is-small is-left">
+          <Icon path={mdiEmail} />
+        </span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="gender">Gender</label>
+      <div class="control has-icons-left">
+        <div class="select">
+          <select bind:value={gender} id="gender" required>
             <option selected disabled hidden>Select</option>
             <option value="MALE">Male</option>
             <option value="FEMALE">Female</option>
           </select>
-          <div
-            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
-          >
-            <svg
-              class="fill-current h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              ><path
-                d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
-              /></svg
-            >
-          </div>
         </div>
+        <span class="icon is-small is-left">
+          <Icon path={mdiFaceWoman} />
+        </span>
       </div>
     </div>
-    <div class="flex flex-wrap">
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="email"
-        >
-          Email Address
-        </label>
+    <div class="field">
+      <label class="label" for="phoneNumber">Phone Number</label>
+      <div class="control has-icons-left">
         <input
-          bind:value={email}
-          class="input-primary"
-          id="email"
-          type="email"
-          placeholder="jane.doe@example.com"
+          bind:value={phoneNumber}
+          class="input"
+          type="tel"
+          id="phoneNumber"
+          placeholder="+254712345678"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiPhone} />
+        </span>
       </div>
     </div>
-    <div class="w-full px-3">
-      <label
-        class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-        for="phoneNumber"
-      >
-        Phone Number
-      </label>
-      <input
-        bind:value={phoneNumber}
-        class="input-primary"
-        type="tel"
-        id="phoneNumber"
-        placeholder="+254712345678"
-        required
-      />
-    </div>
-    <div class="flex flex-wrap">
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="password"
-        >
-          Password
-        </label>
+    <div class="field">
+      <label class="label" for="password">Password</label>
+      <div class="control has-icons-left has-icons-right">
         <input
           bind:value={password}
           class="input"
-          class:border-red-500={!passwordsMatch}
-          class:focus:border-red-500={!passwordsMatch}
-          id="password"
+          class:is-danger={!passwordsMatch}
           type="password"
+          id="password"
           placeholder="****************"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiAccountLock} />
+        </span>
+        {#if !passwordsMatch}
+          <span class="icon is-small is-right">
+            <Icon path={mdiAlertCircle} />
+          </span>
+        {/if}
       </div>
+      {#if !passwordsMatch}
+        <p class="help is-danger">The passwords do not match.</p>
+      {/if}
     </div>
-    <div class="flex flex-wrap">
-      <div class="w-full px-3">
-        <label
-          class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-          for="passwordConfirmation"
-        >
-          Confirm Password
-        </label>
+    <div class="field">
+      <label class="label" for="passwordConfirmation">Confirm Password</label>
+      <div class="control has-icons-left has-icons-right">
         <input
           bind:value={passwordConfirmation}
           class="input"
-          class:border-red-500={!passwordsMatch}
-          class:focus:border-red-500={!passwordsMatch}
-          id="passwordConfirmation"
+          class:is-danger={!passwordsMatch}
           type="password"
+          id="passwordConfirmation"
           placeholder="****************"
           required
         />
+        <span class="icon is-small is-left">
+          <Icon path={mdiAccountLock} />
+        </span>
         {#if !passwordsMatch}
-          <p class="text-red-600 ml-2 mb-4 text-xs">Passwords do not match.</p>
+          <span class="icon is-small is-right">
+            <Icon path={mdiAlertCircle} />
+          </span>
         {/if}
       </div>
+      {#if !passwordsMatch}
+        <p class="help is-danger">The passwords do not match.</p>
+      {/if}
     </div>
-    <div class="w-full px-3">
-      <label
-        class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-        for="passwordConfirmation"
-      >
-        Date of Birth
-      </label>
-      <input
-        bind:value={dateOfBirth}
-        class="input-primary"
-        type="date"
-        id="dateOfBirth"
-        placeholder="Select a date"
-        required
-      />
+    <div class="field">
+      <label class="label" for="dateOfBirth">Date of Birth</label>
+      <div class="control has-icons-left">
+        <input
+          bind:value={dateOfBirth}
+          class="input"
+          type="date"
+          id="dateOfBirth"
+          placeholder="Select a date"
+          required
+        />
+        <span class="icon is-small is-left">
+          <Icon path={mdiBaby} />
+        </span>
+      </div>
     </div>
-    <div class="flex flex-wrap mx-4 my-1">
-      <button class="btn-primary w-full" type="submit">Sign Up</button>
-    </div>
-    <div class="relative flex py-5 items-center mx-4">
-      <div class="flex-grow border-t border-gray-400" />
-      <span class="flex-shrink mx-4 text-gray-400">OR</span>
-      <div class="flex-grow border-t border-gray-400" />
-    </div>
-    <div class="flex mx-4 my-1">
-      <button class="btn-primary w-full">
-        <a href="/login" use:link>Sign In</a>
-      </button>
+    <div class="field is-grouped is-grouped-centered mt-4">
+      <div class="control">
+        <button class="button is-info" type="submit">
+          <span class="icon is-small">
+            <Icon path={mdiCheckAll} />
+          </span>
+          <span>Sign Up</span>
+        </button>
+      </div>
+      <div class="control">
+        <button class="button is-link is-light">
+          <a href="/login" use:link>Sign In</a>
+        </button>
+      </div>
     </div>
   </form>
 </div>

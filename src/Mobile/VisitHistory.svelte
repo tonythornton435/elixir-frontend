@@ -1,1 +1,1 @@
-Visit History
+Visits

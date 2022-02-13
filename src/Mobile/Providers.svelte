@@ -2,15 +2,22 @@
   import Icon from "mdi-svelte";
   import {
     mdiBaby,
+    mdiEmail,
+    mdiEmailFast,
     mdiFlask,
     mdiGlasses,
     mdiHospitalBuilding,
     mdiMagnify,
+    mdiMapMarker,
+    mdiPhone,
     mdiPill,
+    mdiThumbUp,
+    mdiThumbUpOutline,
     mdiTooth,
   } from "@mdi/js";
+  import { afterUpdate, onMount } from "svelte";
 
-  import { apiCall } from "../utils";
+  import { apiCall, bulma } from "../utils";
   import NoMatchingResults from "../NoMatchingResults.svelte";
 
   let query: string,
@@ -38,46 +45,122 @@
     (result) => console.log(result)
   );
 
+  onMount(bulma);
+  afterUpdate(bulma);
+
   async function handleSearch() {
     searching = true;
     await apiCall(
-      "index/providers/search/",
+      "index/facilities/search/",
       "POST",
       (result) => {
-        console.log(result);
         facilities = result["data"];
       },
       (result) => {
-        console.log(result);
+        console.error(result);
+      },
+      JSON.stringify({ query })
+    );
+    await apiCall(
+      "index/practitioners/search/",
+      "POST",
+      (result) => {
+        practitioners = result["data"];
+      },
+      (result) => {
+        console.error(result);
       },
       JSON.stringify({ query })
     );
   }
 </script>
 
-<div class="w-full px-3 mt-5">
-  <!--Provider Search-->
-  <form on:submit|preventDefault={handleSearch} class="flex">
-    <input
-      bind:value={query}
-      class="input-primary"
-      id="providerSearchQuery"
-      type="text"
-      placeholder="Search Provider"
-      required
-    />
-    <button class="btn-primary ml-2 mb-2.5 shadow" type="submit">
-      <Icon path={mdiMagnify} />
-    </button>
-  </form>
-
-  <!--Search Results-->
-  <div class="w-full">
+<div class="container">
+  <nav class="panel">
+    <p class="panel-heading">Providers</p>
+    <div class="panel-block">
+      <form
+        on:submit|preventDefault={handleSearch}
+        style="width: 100% !important;"
+      >
+        <div class="field has-addons" style="width: 100% !important;">
+          <div class="control" style="width: 100% !important;">
+            <input
+              bind:value={query}
+              id="providerSearchQuery"
+              class="input"
+              type="text"
+              placeholder="Search Provider"
+              required
+            />
+          </div>
+          <div class="control">
+            <button class="button is-link" type="submit">
+              <Icon path={mdiMagnify} />
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <p class="panel-tabs">
+      <a class="is-active">All</a>
+      <a>Clinics</a>
+      <a>Practitioners</a>
+      <a>Pharmacies</a>
+      <a>Labs</a>
+      <a>Other</a>
+    </p>
     {#if facilities.length + practitioners.length > 0 || !searching}
-      <ul class="divide-y-2 divide-gray-100">
-        {#each facilities as facility}
-          <li class="p-3 border border-gray-200 rounded-md mt-1 shadow">
-            <div class="flex">
+      {#each facilities as facility}
+        <div id={facility["uuid"]} class="modal">
+          <div class="modal-background" />
+          <div class="modal-card">
+            <header class="modal-card-head">
+              <p class="modal-card-title">{facility["name"]} Contact Details</p>
+              <button class="delete" aria-label="close" />
+            </header>
+            <section class="modal-card-body">
+              <span class="icon-text is-italic">
+                <span class="icon">
+                  <Icon path={mdiEmailFast} />
+                </span>
+                <span>{facility["address"]}</span>
+              </span>
+              <br />
+              <span class="icon-text is-italic">
+                <span class="icon">
+                  <Icon path={mdiMapMarker} />
+                </span>
+                <span>{facility["location"]}, {facility["county"]}</span>
+              </span>
+              <br />
+              <span class="icon-text">
+                <span class="icon">
+                  <Icon path={mdiPhone} />
+                </span>
+                <span>{facility["phone_number"]}</span>
+              </span>
+              <br />
+              <span class="icon-text">
+                <span class="icon">
+                  <Icon path={mdiEmail} />
+                </span>
+                <span>{facility["email"]}</span>
+              </span>
+            </section>
+            <footer class="modal-card-foot">
+              <button class="button is-link">
+                <span class="icon is-small">
+                  <Icon path={mdiThumbUpOutline} />
+                </span>
+                <span>Got it!</span>
+              </button>
+            </footer>
+          </div>
+        </div>
+        <a class="panel-block js-modal-trigger" data-target={facility["uuid"]}>
+          <span class="icon-text">
+            <span class="icon">
               {#if facility["type"] == "MBL"}
                 <Icon path={mdiFlask} />
               {:else if facility["type"] == "PHARM"}
@@ -92,25 +175,13 @@
                 <!--HOSP, PSY, RH-->
                 <Icon path={mdiHospitalBuilding} />
               {/if}
-              <p class="font-bold ml-2 mt-0.5">{facility["name"]}</p>
-            </div>
-            <div class="flex justify-between mt-2">
-              <div class="italic">
-                <p class="text-sm text-gray-800">
-                  {facility["location"]}, {facility["county"]}
-                </p>
-                <p class="text-sm text-gray-800">{facility["address"]}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-800">{facility["phone_number"]}</p>
-                <p class="text-sm text-gray-800">{facility["email"]}</p>
-              </div>
-            </div>
-          </li>
-        {/each}
-      </ul>
+            </span>
+            <span>{facility["name"]}</span>
+          </span>
+        </a>
+      {/each}
     {:else}
       <NoMatchingResults />
     {/if}
-  </div>
+  </nav>
 </div>

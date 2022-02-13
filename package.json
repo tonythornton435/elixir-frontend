@@ -3,10 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "watch:tailwind": "postcss public/tailwind.css -o public/index.css -w",
-    "build:tailwind": "cross-env NODE_ENV=production postcss public/tailwind.css -o public/index.css",
-    "build": "npm run build:tailwind && rollup -c",
-    "dev": "concurrently \"npm run watch:tailwind\" \"rollup -c -w\"",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
@@ -16,10 +14,8 @@
     "@rollup/plugin-typescript": "^8.0.0",
     "@tsconfig/svelte": "^2.0.0",
     "autoprefixer": "^9.8.8",
-    "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
     "mdi-svelte": "^1.1.2",
-    "postcss-cli": "^7.1.2",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
@@ -28,7 +24,6 @@
     "svelte": "^3.0.0",
     "svelte-check": "^2.0.0",
     "svelte-preprocess": "^4.0.0",
-    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.17",
     "tslib": "^2.0.0",
     "typescript": "^4.0.0"
   },
@@ -39,6 +34,7 @@
     "@capacitor/storage": "^1.2.3",
     "@mdi/js": "^6.5.95",
     "jwt-decode": "^3.1.2",
+    "qrcode": "^1.5.0",
     "sirv-cli": "^2.0.0",
     "svelte-spa-router": "^3.2.0"
   }
