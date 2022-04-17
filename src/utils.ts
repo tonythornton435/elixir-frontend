@@ -24,6 +24,8 @@ export async function apiCall(
     requestObj["body"] = body;
   }
 
+  console.log(requestObj, userObj);
+
   await fetch(API_BASE_URL + endpoint, requestObj).then(async (res) => {
     const result = await res.json();
 
@@ -120,4 +122,25 @@ export function bulma() {
       closeAllModals();
     }
   });
+
+  // TABS
+  (document.querySelectorAll(".tab") || []).forEach($tab => {
+    $tab.addEventListener('click', (e) => {
+      // event.currentTarget refers to element on which
+      // the event listener was attached
+      const tabName = e.currentTarget.attributes[1].nodeValue;
+      const currentTab = document.querySelector('.tab.is-active');
+      const currentContent = document.getElementById(`${currentTab.id}-content`);
+      const newTab = document.getElementById(tabName);
+      const newTabContent = document.getElementById(`${tabName}-content`);
+
+      console.log(tabName, currentTab, `${currentTab.id}-content`, newTab, `${tabName}-content`);
+
+      currentTab.classList.remove('is-active');
+      currentContent.classList.add('is-hidden');
+
+      newTab.classList.add('is-active');
+      newTabContent.classList.remove('is-hidden');
+    })
+  })
 }

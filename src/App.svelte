@@ -7,6 +7,9 @@
   import Login from "./Login.svelte";
   import SignUp from "./SignUp.svelte";
   import NotFound from "./NotFound.svelte";
+  import PractitionerSignUp from "./Desktop/PractitionerSignUp.svelte";
+  import RecordVisit from "./Desktop/RecordVisit.svelte";
+  import Patient from "./Desktop/Patient.svelte";
 
   let routes;
 
@@ -22,6 +25,9 @@
       "/": DesktopDashboard,
       "/login": Login,
       "/signup": SignUp,
+      "/patient": Patient,
+      "/record-visit": RecordVisit,
+      "/practitioner-signup": PractitionerSignUp,
       "*": NotFound,
     };
   }
