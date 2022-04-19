@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Icon from "mdi-svelte";
   import {
     mdiBaby,
     mdiEmail,
@@ -11,10 +10,10 @@
     mdiMapMarker,
     mdiPhone,
     mdiPill,
-    mdiThumbUp,
     mdiThumbUpOutline,
     mdiTooth,
   } from "@mdi/js";
+  import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
 
   import { apiCall, bulma } from "../utils";

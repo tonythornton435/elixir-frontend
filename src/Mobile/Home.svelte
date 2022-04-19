@@ -1,20 +1,19 @@
 <script lang="ts">
-  import { user } from "../stores";
-  import QRCode from "qrcode";
-  import Icon from "mdi-svelte";
   import { mdiExitRun } from "@mdi/js";
-  import { get } from "svelte/store";
+  import Icon from "mdi-svelte";
+  import QRCode from "qrcode";
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
 
+  import { userStore } from "../common-stores";
+  import Loading from "../Loading.svelte";
   import { logout } from "../utils";
 
-  import Loading from "../Loading.svelte";
-
   onMount(async () => {
-    let userObj = await get(user);
+    let user = await get(userStore);
     QRCode.toCanvas(
       document.getElementById("qr-code"),
-      userObj["user"]["uuid"],
+      user["user"]["uuid"],
       function (error) {
         if (error) console.error(error);
       }
@@ -22,7 +21,7 @@
   });
 </script>
 
-{#await $user}
+{#await $userStore}
   <Loading />
 {:then user}
   <div class="container is-fluid mt-6">
@@ -37,7 +36,7 @@
     </div>
     <div class="mt-2 columns is-flex is-centered has-text-weight-bold">
       {user["user"]["first_name"]}
-      {user["user"]["surname"]}
+      {user["user"]["last_name"]}
     </div>
     <div class="columns is-flex is-centered">
       <button class="button is-info" on:click={logout}>

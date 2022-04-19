@@ -1,7 +1,6 @@
 import { get } from "svelte/store";
-import { Storage } from "@capacitor/storage";
 
-import { user } from "./stores";
+import { deleteValue, userStore } from "./common-stores";
 import { API_BASE_URL } from "./constants";
 
 export async function apiCall(
@@ -11,22 +10,21 @@ export async function apiCall(
   failureCallback,
   body?: string
 ) {
-  let userObj = await get(user);
-  let requestObj = { method };
+  let user = await get(userStore);
+  let request = { method };
   let headers = { "Content-Type": "application/json" };
 
-  if (userObj) {
-    headers["Authorization"] = `Bearer ${userObj["token"]["rawToken"]}`;
+  if (user) {
+    headers["Authorization"] = `Bearer ${user["token"]}`;
   }
-  requestObj["headers"] = new Headers(headers);
+  request["headers"] = new Headers(headers);
 
   if (body) {
-    requestObj["body"] = body;
+    request["body"] = body;
+    console.log(body);
   }
 
-  console.log(requestObj, userObj);
-
-  await fetch(API_BASE_URL + endpoint, requestObj).then(async (res) => {
+  await fetch(API_BASE_URL + endpoint, request).then(async (res) => {
     const result = await res.json();
 
     if (result["status"] === "success") successCallback(result);
@@ -35,8 +33,46 @@ export async function apiCall(
 }
 
 export async function logout() {
-  await Storage.remove({ key: "user" });
-  user.set(null);
+  deleteValue(userStore, "user");
+}
+
+export function onInputSearchDataList(
+  searchFieldID: string,
+  datalistID: string,
+  callback
+) {
+  var val = document.getElementById(searchFieldID).value;
+  var opts = document.getElementById(datalistID).childNodes;
+  for (var i = 0; i < opts.length; i++) {
+    if (opts[i].value === val) {
+      let data_value = opts[i].getAttribute("data-value");
+      callback(data_value);
+      break;
+    }
+  }
+}
+
+export const clickEvent = new MouseEvent("click", {
+  view: window,
+  bubbles: true,
+  cancelable: false,
+});
+
+const removeProperty = (propKey, { [propKey]: propValue, ...rest }) => rest;
+export const removeProperties = (object, ...keys) =>
+  keys.length
+    ? removeProperties(removeProperty(keys.pop(), object), ...keys)
+    : object;
+
+export function pickProperties<T, K extends keyof T>(
+  obj: T,
+  ...keys: K[]
+): Pick<T, K> {
+  const copy = {} as Pick<T, K>;
+
+  keys.forEach((key) => (copy[key] = obj[key]));
+
+  return copy;
 }
 
 export function bulma() {
@@ -124,23 +160,23 @@ export function bulma() {
   });
 
   // TABS
-  (document.querySelectorAll(".tab") || []).forEach($tab => {
-    $tab.addEventListener('click', (e) => {
+  (document.querySelectorAll(".tab") || []).forEach(($tab) => {
+    $tab.addEventListener("click", (e) => {
       // event.currentTarget refers to element on which
       // the event listener was attached
       const tabName = e.currentTarget.attributes[1].nodeValue;
-      const currentTab = document.querySelector('.tab.is-active');
-      const currentContent = document.getElementById(`${currentTab.id}-content`);
+      const currentTab = document.querySelector(".tab.is-active");
+      const currentContent = document.getElementById(
+        `${currentTab.id}-content`
+      );
       const newTab = document.getElementById(tabName);
       const newTabContent = document.getElementById(`${tabName}-content`);
 
-      console.log(tabName, currentTab, `${currentTab.id}-content`, newTab, `${tabName}-content`);
+      currentTab.classList.remove("is-active");
+      currentContent.classList.add("is-hidden");
 
-      currentTab.classList.remove('is-active');
-      currentContent.classList.add('is-hidden');
-
-      newTab.classList.add('is-active');
-      newTabContent.classList.remove('is-hidden');
-    })
-  })
+      newTab.classList.add("is-active");
+      newTabContent.classList.remove("is-hidden");
+    });
+  });
 }

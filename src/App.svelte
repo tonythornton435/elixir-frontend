@@ -1,38 +1,68 @@
 <script lang="ts">
   import { Capacitor } from "@capacitor/core";
-  import Router from "svelte-spa-router";
+  import jwt_decode from "jwt-decode";
+  import Router, { replace } from "svelte-spa-router";
+  import { wrap } from "svelte-spa-router/wrap";
 
-  import MobileDashboard from "./Mobile/Dashboard.svelte";
-  import DesktopDashboard from "./Desktop/Dashboard.svelte";
+  import AccessDenied from "./AccessDenied.svelte";
   import Login from "./Login.svelte";
-  import SignUp from "./SignUp.svelte";
   import NotFound from "./NotFound.svelte";
-  import PractitionerSignUp from "./Desktop/PractitionerSignUp.svelte";
-  import RecordVisit from "./Desktop/RecordVisit.svelte";
-  import Patient from "./Desktop/Patient.svelte";
+  import SignUp from "./SignUp.svelte";
+  import { getValue } from "./common-stores";
+  import type { Token } from "./types";
 
-  let routes;
+  async function authenticationGuard(required_role: string) {
+    const user = await getValue("user");
+    if (user === null) {
+      return false;
+    }
 
+    let token: Token = jwt_decode(user.token);
+    return token.roles.includes(required_role);
+  }
+
+  function accessDenied(event) {
+    replace("/access-denied");
+  }
+
+  let routes = {};
   if (Capacitor.isNativePlatform()) {
     routes = {
-      "/": MobileDashboard,
+      "/": wrap({
+        asyncComponent: () => import("./Mobile/Dashboard.svelte"),
+        conditions: [async (detail) => authenticationGuard("PATIENT")],
+      }),
       "/login": Login,
       "/signup": SignUp,
+      "/access-denied": AccessDenied,
       "*": NotFound,
     };
   } else {
     routes = {
-      "/": DesktopDashboard,
+      "/": wrap({
+        asyncComponent: () => import("./Desktop/Dashboard.svelte"),
+        conditions: [async (detail) => authenticationGuard("PRACTITIONER")],
+      }),
+      "/patient": wrap({
+        asyncComponent: () => import("./Desktop/Patient.svelte"),
+        conditions: [async (detail) => authenticationGuard("PRACTITIONER")],
+      }),
+      "/record-visit": wrap({
+        asyncComponent: () => import("./Desktop/RecordVisit.svelte"),
+        conditions: [async (detail) => authenticationGuard("PRACTITIONER")],
+      }),
       "/login": Login,
       "/signup": SignUp,
-      "/patient": Patient,
-      "/record-visit": RecordVisit,
-      "/practitioner-signup": PractitionerSignUp,
+      "/practitioner-signup": wrap({
+        asyncComponent: () => import("./Desktop/PractitionerSignUp.svelte"),
+        conditions: [async (detail) => authenticationGuard("PATIENT")],
+      }),
+      "/access-denied": AccessDenied,
       "*": NotFound,
     };
   }
 </script>
 
 <main class="flex h-screen">
-  <Router {routes} />
+  <Router {routes} on:conditionsFailed={accessDenied} />
 </main>

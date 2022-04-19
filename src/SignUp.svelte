@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { link, push } from "svelte-spa-router";
-  import Icon from "mdi-svelte";
   import {
     mdiEmail,
     mdiFaceMan,
@@ -13,6 +11,8 @@
     mdiFaceWoman,
     mdiCheckAll,
   } from "@mdi/js";
+  import Icon from "mdi-svelte";
+  import { link, push } from "svelte-spa-router";
 
   import { apiCall } from "./utils";
 
@@ -32,34 +32,34 @@
     (document.getElementById("dateOfBirth") as HTMLInputElement).max =
       new Date().toISOString().split("T")[0];
   });
-
-  async function handleSubmit() {
-    passwordsMatch = password === passwordConfirmation;
-    if (!passwordsMatch) return;
-
-    await apiCall(
-      "auth/register/",
-      "POST",
-      async (result) => {
-        push("/login");
-      },
-      () => (signUpFailed = true),
-      JSON.stringify({
-        email,
-        password,
-        first_name: firstName,
-        surname,
-        national_id: nationalID,
-        gender: gender,
-        date_of_birth: dateOfBirth,
-        phone_number: phoneNumber,
-      })
-    );
-  }
 </script>
 
 <div class="container is-fluid mt-6 mb-4">
-  <form on:submit|preventDefault={handleSubmit}>
+  <form
+    on:submit|preventDefault={async () => {
+      passwordsMatch = password === passwordConfirmation;
+      if (!passwordsMatch) return;
+
+      await apiCall(
+        "auth/register/",
+        "POST",
+        async (result) => {
+          push("/login");
+        },
+        () => (signUpFailed = true),
+        JSON.stringify({
+          email,
+          password,
+          first_name: firstName,
+          surname,
+          national_id: nationalID,
+          gender: gender,
+          date_of_birth: dateOfBirth,
+          phone_number: phoneNumber,
+        })
+      );
+    }}
+  >
     <div class="columns is-flex is-centered">
       <figure class="image">
         <img
@@ -145,7 +145,6 @@
       <div class="control has-icons-left">
         <div class="select">
           <select bind:value={gender} id="gender" required>
-            <option selected disabled hidden>Select</option>
             <option value="MALE">Male</option>
             <option value="FEMALE">Female</option>
           </select>

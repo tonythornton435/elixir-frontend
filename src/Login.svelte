@@ -1,43 +1,39 @@
 <script lang="ts">
-  import { link, push } from "svelte-spa-router";
-  import jwt_decode from "jwt-decode";
   import { Storage } from "@capacitor/storage";
+  import { mdiAccountLock, mdiCheckAll, mdiEmail } from "@mdi/js";
   import Icon from "mdi-svelte";
-  import { mdiEmail, mdiAccountLock, mdiCheckAll } from "@mdi/js";
+  import { link, push } from "svelte-spa-router";
 
-  import { user } from "./stores";
+  import { userStore } from "./common-stores";
   import { apiCall } from "./utils";
 
   let email: string, password: string;
   let loginFailed = false;
-
-  async function handleSubmit() {
-    await apiCall(
-      "auth/login/",
-      "POST",
-      async (result) => {
-        loginFailed = false;
-        let token = jwt_decode(result["data"]["token"]);
-        token["rawToken"] = result["data"]["token"];
-        let auth_user = { user: result["data"]["user"], token };
-        user.set(Promise.resolve(auth_user));
-        await Storage.set({
-          key: "user",
-          value: JSON.stringify(auth_user),
-        });
-        push("/");
-      },
-      () => (loginFailed = true),
-      JSON.stringify({
-        email,
-        password,
-      })
-    );
-  }
 </script>
 
 <div class="container is-fluid" style="padding-top: 128px;">
-  <form on:submit|preventDefault={handleSubmit}>
+  <form
+    on:submit|preventDefault={async () => {
+      await apiCall(
+        "auth/login/",
+        "POST",
+        async (result) => {
+          loginFailed = false;
+          userStore.set(Promise.resolve(result["data"]));
+          await Storage.set({
+            key: "user",
+            value: JSON.stringify(result["data"]),
+          });
+          push("/");
+        },
+        () => (loginFailed = true),
+        JSON.stringify({
+          email,
+          password,
+        })
+      );
+    }}
+  >
     <div class="columns is-flex is-centered">
       <figure class="image">
         <img

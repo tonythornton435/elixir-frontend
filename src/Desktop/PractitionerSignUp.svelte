@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { link, push } from "svelte-spa-router";
-  import Icon from "mdi-svelte";
   import { mdiCalendar, mdiDoctor, mdiHospitalBuilding } from "@mdi/js";
+  import Icon from "mdi-svelte";
+  import { push } from "svelte-spa-router";
   import { afterUpdate, onMount } from "svelte";
 
   import { apiCall, bulma } from "../utils";
@@ -24,26 +24,7 @@
     (result) => console.log(result)
   );
 
-  async function handleSubmit() {
-    await apiCall(
-      "index/practitioners/new/",
-      "POST",
-      async (result) => {
-        push("/login");
-      },
-      () => (saveFailed = true),
-      JSON.stringify({
-        email,
-        password,
-        first_name: firstName,
-        surname,
-        national_id: nationalID,
-        gender: gender,
-        date_of_birth: dateOfBirth,
-        phone_number: phoneNumber,
-      })
-    );
-  }
+  async function handleSubmit() {}
 </script>
 
 <div class="container is-fluid mt-6 mb-4">
@@ -57,7 +38,6 @@
       <div class="control has-icons-left">
         <div class="select">
           <select bind:value={practitionerType} id="practitionerType" required>
-            <option selected disabled hidden>Select</option>
             <option value="PHYSICIAN">Physician</option>
             <option value="NURSE">Nurse</option>
             <option value="LAB_TECHNICIAN">Lab Technician</option>
@@ -78,7 +58,6 @@
       <div class="control has-icons-left">
         <div class="select">
           <select bind:value={facilityID} id="facilityID" required>
-            <option selected disabled hidden>Select</option>
             {#if facilities.length > 0}
               {#each facilities as facility}
                 <option value={facility["uuid"]}>{facility["name"]}</option>
