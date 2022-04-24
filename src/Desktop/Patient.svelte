@@ -10,10 +10,10 @@
   import { afterUpdate, onMount } from "svelte";
   import { link } from "svelte-spa-router";
 
-  import { apiCall, bulma, onInputSearchDataList } from "../utils";
   import { storeValue } from "../common-stores";
   import NoMatchingResults from "../NoMatchingResults.svelte";
   import { patientStore } from "./stores";
+  import { apiCall, bulma, onInputSearchDataList } from "../utils";
 
   onMount(bulma);
   afterUpdate(bulma);
@@ -34,10 +34,7 @@
         (result) => {
           patients = result["data"];
         },
-        (result) => {
-          console.error(result);
-        },
-        JSON.stringify({ query })
+        { query }
       );
     }}
     style="width: 100% !important;"

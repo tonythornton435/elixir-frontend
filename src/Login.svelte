@@ -26,11 +26,11 @@
           });
           push("/");
         },
-        () => (loginFailed = true),
-        JSON.stringify({
+        {
           email,
           password,
-        })
+        },
+        () => (loginFailed = true)
       );
     }}
   >

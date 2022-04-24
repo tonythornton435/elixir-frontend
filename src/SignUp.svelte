@@ -46,8 +46,7 @@
         async (result) => {
           push("/login");
         },
-        () => (signUpFailed = true),
-        JSON.stringify({
+        {
           email,
           password,
           first_name: firstName,
@@ -56,7 +55,8 @@
           gender: gender,
           date_of_birth: dateOfBirth,
           phone_number: phoneNumber,
-        })
+        },
+        () => (signUpFailed = true)
       );
     }}
   >

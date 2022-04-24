@@ -49,10 +49,9 @@
     VisitStatus,
     VisitType,
   } from "../types";
-  import { apiCall, bulma, clickEvent, pickProperties, removeProperties } from "../utils";
+  import { apiCall, bulma, clickEvent } from "../utils";
 
   let patient,
-    user,
     visit: Visit,
     visitStarted = false,
     consultation: Encounter = structuredClone(encounterDefaults),
@@ -85,7 +84,6 @@
     if (patient === null) {
       push("/patient");
     }
-    user = await getValue("user");
 
     visit = (await getValue("visit")) || visitDefaults;
     if (consultation.author_id === null) {
@@ -452,10 +450,7 @@
                     LOINCs = result["data"];
                     console.log(LOINCs);
                   },
-                  (result) => {
-                    console.error(result);
-                  },
-                  JSON.stringify({ query: LOINCSearchQuery })
+                  { query: LOINCSearchQuery }
                 );
                 searchingLOINC = false;
               }}
@@ -517,10 +512,7 @@
                   (result) => {
                     ICD10s = result["data"];
                   },
-                  (result) => {
-                    console.error(result);
-                  },
-                  JSON.stringify({ query: ICD10SearchQuery })
+                  { query: ICD10SearchQuery }
                 );
                 searchingICD10 = false;
               }}
@@ -648,10 +640,7 @@
                     HCPCSs = result["data"];
                     console.log(HCPCSs);
                   },
-                  (result) => {
-                    console.error(result);
-                  },
-                  JSON.stringify({ query: HCPCSSearchQuery })
+                  { query: HCPCSSearchQuery }
                 );
                 searchingHCPCS = false;
               }}
@@ -739,10 +728,7 @@
                     RxTerms = result["data"];
                     console.log(RxTerms);
                   },
-                  (result) => {
-                    console.error(result);
-                  },
-                  JSON.stringify({ query: RxTermSearchQuery })
+                  { query: RxTermSearchQuery }
                 );
                 searchingRxTerm = false;
               }}
@@ -1050,27 +1036,22 @@
           visit.status = VisitStatus.Finalized;
           visit.end = new Date();
           storeValue(visitStore, "visit", visit);
-          let newVisit = removeProperties(visit, [
-            "primary_diagnosis",
-            "secondary_diagnoses",
-          ]);
+          let newVisit = structuredClone(visit);
           newVisit.primary_diagnosis_id = visit.primary_diagnosis.uuid;
-          // newVisit.secondary_diagnoses = [];
+          newVisit.secondary_diagnoses = [];
+          for (let secondary_diagnosis of visit.secondary_diagnoses) {
+            newVisit.secondary_diagnoses.push(secondary_diagnosis.uuid);
+          }
           delete newVisit.primary_diagnosis;
-          delete newVisit.secondary_diagnoses;
 
           await apiCall(
             "facility/visits/new/",
             "POST",
             (result) => {
-              console.log(newVisit);
               console.log(result);
               console.log("Visit Saved!");
             },
-            (result) => {
-              console.error(result);
-            },
-            JSON.stringify(newVisit)
+            newVisit
           );
 
           nurseMeasurements.status = EncounterStatus.Finished;
@@ -1088,10 +1069,7 @@
           //     console.log(result);
           //     console.log("Nurse Encounter Saved!");
           //   },
-          //   (result) => {
-          //     console.error(result);
-          //   },
-          //   JSON.stringify(nurseMeasurements)
+          //   nurseMeasurements
           // );
           // for (let observation in nurseMeasurements.observations) {
           //   await apiCall(
@@ -1101,10 +1079,7 @@
           //     console.log(observation);
           //     console.log(result);
           //   },
-          //   (result) => {
-          //     console.error(result);
-          //   },
-          //   JSON.stringify(observation)
+          //   observation
           // );
           // }
 
@@ -1119,10 +1094,7 @@
           //     console.log(result);
           //     console.log("consultation Encounter Saved!");
           //   },
-          //   (result) => {
-          //     console.error(result);
-          //   },
-          //   JSON.stringify(consultation)
+          //   consultation
           // );
 
           labs.status = EncounterStatus.Finished;

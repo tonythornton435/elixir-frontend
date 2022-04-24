@@ -1,7 +1,6 @@
 <script lang="ts">
   import { mdiCalendar, mdiDoctor, mdiHospitalBuilding } from "@mdi/js";
   import Icon from "mdi-svelte";
-  import { push } from "svelte-spa-router";
   import { afterUpdate, onMount } from "svelte";
 
   import { apiCall, bulma } from "../utils";
@@ -21,7 +20,6 @@
     (result) => {
       facilities = result["data"];
     },
-    (result) => console.log(result)
   );
 
   async function handleSubmit() {}

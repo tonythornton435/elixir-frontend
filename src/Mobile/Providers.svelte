@@ -31,7 +31,6 @@
       console.log(result);
       facilities = result["data"];
     },
-    (result) => console.log(result)
   );
 
   apiCall(
@@ -41,7 +40,6 @@
       console.log(result);
       practitioners = result["data"];
     },
-    (result) => console.log(result)
   );
 
   onMount(bulma);
@@ -55,10 +53,7 @@
       (result) => {
         facilities = result["data"];
       },
-      (result) => {
-        console.error(result);
-      },
-      JSON.stringify({ query })
+      { query }
     );
     await apiCall(
       "index/practitioners/search/",
@@ -66,10 +61,7 @@
       (result) => {
         practitioners = result["data"];
       },
-      (result) => {
-        console.error(result);
-      },
-      JSON.stringify({ query })
+      { query }
     );
   }
 </script>

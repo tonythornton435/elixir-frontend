@@ -1,14 +1,14 @@
+import { deleteValue, userStore } from "./common-stores";
 import { get } from "svelte/store";
 
-import { deleteValue, userStore } from "./common-stores";
 import { API_BASE_URL } from "./constants";
 
 export async function apiCall(
   endpoint: string,
   method: string,
   successCallback,
-  failureCallback,
-  body?: string
+  body?: object,
+  failureCallback?
 ) {
   let user = await get(userStore);
   let request = { method };
@@ -20,8 +20,14 @@ export async function apiCall(
   request["headers"] = new Headers(headers);
 
   if (body) {
-    request["body"] = body;
     console.log(body);
+    request["body"] = JSON.stringify(body);
+  }
+
+  if (!failureCallback) {
+    failureCallback = (result) => {
+      console.error(result);
+    };
   }
 
   await fetch(API_BASE_URL + endpoint, request).then(async (res) => {
@@ -31,6 +37,7 @@ export async function apiCall(
     else failureCallback(result);
   });
 }
+
 
 export async function logout() {
   deleteValue(userStore, "user");
@@ -57,23 +64,6 @@ export const clickEvent = new MouseEvent("click", {
   bubbles: true,
   cancelable: false,
 });
-
-const removeProperty = (propKey, { [propKey]: propValue, ...rest }) => rest;
-export const removeProperties = (object, ...keys) =>
-  keys.length
-    ? removeProperties(removeProperty(keys.pop(), object), ...keys)
-    : object;
-
-export function pickProperties<T, K extends keyof T>(
-  obj: T,
-  ...keys: K[]
-): Pick<T, K> {
-  const copy = {} as Pick<T, K>;
-
-  keys.forEach((key) => (copy[key] = obj[key]));
-
-  return copy;
-}
 
 export function bulma() {
   // NAVBAR
