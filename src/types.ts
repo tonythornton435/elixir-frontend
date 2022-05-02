@@ -150,6 +150,7 @@ export interface Encounter extends ID {
   services: Service[];
   observations: Observation[];
   prescriptions: Prescription[];
+  visit_id?: string;
 }
 
 export const encounterDefaults: Encounter = {

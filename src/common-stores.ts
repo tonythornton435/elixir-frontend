@@ -7,7 +7,6 @@ export async function getValue(key: string) {
 }
 
 export async function storeValue(store, key: string, value) {
-  console.log(value);
   store.set(value);
   await Storage.set({
     key,

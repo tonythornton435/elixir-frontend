@@ -38,6 +38,31 @@ export async function apiCall(
   });
 }
 
+export function prepForPOST(data: object) {
+  let result = {};
+  console.log(data);
+  for (const [key, value] of Object.entries(data)) {
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      !(value instanceof Date)
+    ) {
+      if (Array.isArray(value)) {
+        result[key] = value.map((x) =>
+          x.hasOwnProperty("uuid") ? x.uuid : prepForPOST(x)
+        );
+      } else if (value.hasOwnProperty("uuid")) {
+        result[`${key}_id`] = value.uuid;
+      } else {
+        result[key] = value;
+      }
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
 
 export async function logout() {
   deleteValue(userStore, "user");

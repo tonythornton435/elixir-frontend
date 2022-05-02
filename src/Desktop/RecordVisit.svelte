@@ -28,7 +28,6 @@
   import structuredClone from "@ungap/structured-clone";
 
   import { getValue, storeValue } from "../common-stores";
-  import { onArrivalMeasurements } from "../constants";
   import {
     consultationStore,
     labsStore,
@@ -49,7 +48,7 @@
     VisitStatus,
     VisitType,
   } from "../types";
-  import { apiCall, bulma, clickEvent } from "../utils";
+  import { apiCall, bulma, clickEvent, prepForPOST } from "../utils";
 
   let patient,
     visit: Visit,
@@ -59,7 +58,7 @@
     nurseMeasurements: Encounter = structuredClone(encounterDefaults),
     chargeableItems: ChargeableItem[] = [];
   let selectedMeasurement: LOINC,
-    availableMeasurements = onArrivalMeasurements;
+    availableMeasurements: LOINC[] = [];
   let billTotal = 0,
     paidTotal = 0;
 
@@ -98,6 +97,11 @@
       (await getValue("nurse-measurements")) || nurseMeasurements;
     const observedCodes = nurseMeasurements.observations.map(
       (observation) => observation.loinc.code
+    );
+    await apiCall(
+      "facility/loinc/arrival-measurements/",
+      "GET",
+      (result) => (availableMeasurements = result["data"])
     );
     availableMeasurements = availableMeasurements.filter(
       (measurement) => !observedCodes.includes(measurement.code)
@@ -269,7 +273,7 @@
                   {
                     loinc: selectedMeasurement,
                     result: "",
-                    unit_price: null,
+                    unit_price: 0,
                     quantity: 0,
                     is_paid: false,
                   },
@@ -1036,24 +1040,6 @@
           visit.status = VisitStatus.Finalized;
           visit.end = new Date();
           storeValue(visitStore, "visit", visit);
-          let newVisit = structuredClone(visit);
-          newVisit.primary_diagnosis_id = visit.primary_diagnosis.uuid;
-          newVisit.secondary_diagnoses = [];
-          for (let secondary_diagnosis of visit.secondary_diagnoses) {
-            newVisit.secondary_diagnoses.push(secondary_diagnosis.uuid);
-          }
-          delete newVisit.primary_diagnosis;
-
-          await apiCall(
-            "facility/visits/new/",
-            "POST",
-            (result) => {
-              console.log(result);
-              console.log("Visit Saved!");
-            },
-            newVisit
-          );
-
           nurseMeasurements.status = EncounterStatus.Finished;
           nurseMeasurements.end = new Date();
           storeValue(
@@ -1061,45 +1047,29 @@
             "nurse-measurements",
             nurseMeasurements
           );
-          // await apiCall(
-          //   "facility/encounters/new/",
-          //   "POST",
-          //   (result) => {
-          //     console.log(nurseMeasurements);
-          //     console.log(result);
-          //     console.log("Nurse Encounter Saved!");
-          //   },
-          //   nurseMeasurements
-          // );
-          // for (let observation in nurseMeasurements.observations) {
-          //   await apiCall(
-          //   "facility/observations/new/",
-          //   "POST",
-          //   (result) => {
-          //     console.log(observation);
-          //     console.log(result);
-          //   },
-          //   observation
-          // );
-          // }
-
           consultation.status = EncounterStatus.Finished;
           consultation.end = new Date();
           storeValue(consultationStore, "consultation", consultation);
-          // await apiCall(
-          //   "facility/encounters/new/",
-          //   "POST",
-          //   (result) => {
-          //     console.log(consultation);
-          //     console.log(result);
-          //     console.log("consultation Encounter Saved!");
-          //   },
-          //   consultation
-          // );
-
           labs.status = EncounterStatus.Finished;
           labs.end = new Date();
           storeValue(labsStore, "labs", labs);
+
+          visit["encounters"] = [nurseMeasurements, consultation, labs];
+
+          await apiCall(
+            "facility/visits/new/",
+            "POST",
+            async (result) => {
+              let visit = result["data"];
+              console.log(visit);
+              storeValue(visitStore, "visit", null);
+              storeValue(nurseMeasurementsStore, "nurse-measurements", null);
+              storeValue(consultationStore, "consultation", null);
+              storeValue(labsStore, "labs", null);
+              push("/patient");
+            },
+            prepForPOST(visit)
+          );
         }}
       >
         <button class="button is-info" type="submit">
@@ -1108,13 +1078,6 @@
           </span>
           <span>Save Visit</span>
         </button>
-
-        <p>
-          {console.log(visit)}
-          {console.log(nurseMeasurements)}
-          {console.log(consultation)}
-          {console.log(labs)}
-        </p>
       </form>
     </div>
   </div>
