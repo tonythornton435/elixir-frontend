@@ -23,11 +23,11 @@
   } from "@mdi/js";
   import { marked } from "marked";
   import Icon from "mdi-svelte";
-  import { push } from "svelte-spa-router";
   import { afterUpdate, onMount } from "svelte";
   import structuredClone from "@ungap/structured-clone";
 
   import { getValue, storeValue } from "../common-stores";
+  import Patient from "./Patient.svelte";
   import {
     consultationStore,
     labsStore,
@@ -49,6 +49,8 @@
     VisitType,
   } from "../types";
   import { apiCall, bulma, clickEvent, prepForPOST } from "../utils";
+
+  export let tab = this;
 
   let patient,
     visit: Visit,
@@ -81,7 +83,7 @@
     bulma();
     patient = await getValue("patient");
     if (patient === null) {
-      push("/patient");
+      tab = Patient;
     }
 
     visit = (await getValue("visit")) || visitDefaults;
@@ -129,11 +131,7 @@
 </script>
 
 {#if patient && visit && consultation && nurseMeasurements && labs}
-  <div class="container has-text-centered">
-    <h1 class="title mt-4 mb-4">Record Visit</h1>
-  </div>
-
-  <div class="tabs is-boxed is-fullwidth">
+  <div class="tabs is-boxed is-fullwidth mt-2">
     <ul>
       <li class="tab is-active" id="startVisitTab">
         <!-- svelte-ignore a11y-missing-attribute -->
@@ -1066,7 +1064,7 @@
               storeValue(nurseMeasurementsStore, "nurse-measurements", null);
               storeValue(consultationStore, "consultation", null);
               storeValue(labsStore, "labs", null);
-              push("/patient");
+              tab = Patient;
             },
             prepForPOST(visit)
           );

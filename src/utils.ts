@@ -84,11 +84,33 @@ export function onInputSearchDataList(
   }
 }
 
+export function toDateString(dateObj: Date | string, appendTime = false) {
+  const date: Date =
+    dateObj instanceof Date ? (dateObj as Date) : new Date(dateObj);
+
+  let result = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  if (appendTime) {
+    result += ` ${date.getUTCHours().toString().padStart(2, "0")}:${date
+      .getUTCMinutes()
+      .toString()
+      .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`;
+  }
+  return result;
+}
+
 export const clickEvent = new MouseEvent("click", {
   view: window,
   bubbles: true,
   cancelable: false,
 });
+
+export const delay = (s) => new Promise((res) => setTimeout(res, s * 1000));
 
 export function bulma() {
   // NAVBAR

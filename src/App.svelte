@@ -11,6 +11,11 @@
   import { getValue } from "./common-stores";
   import type { Token } from "./types";
 
+  import "../node_modules/bulma/css/bulma.min.css";
+  import "../node_modules/@creativebulma/bulma-divider/dist/bulma-divider.min.css";
+  import "../node_modules/bulma-list/css/bulma-list.css";
+  import "../node_modules/bulma-timeline/dist/css/bulma-timeline.min.css";
+
   async function authenticationGuard(required_role: string) {
     const user = await getValue("user");
     if (user === null) {

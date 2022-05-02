@@ -12,6 +12,7 @@ export enum VisitStatus {
 
 interface ID {
   uuid?: string;
+  created?: string;
 }
 
 export interface ICD10Category extends ID {
@@ -51,6 +52,7 @@ export interface Visit extends ID {
   invoice_number: string;
   status: VisitStatus;
   discharge_disposition: DischargeDisposition;
+  encounters: Encounter[];
 }
 export const visitDefaults: Visit = {
   patient_id: "",
@@ -63,6 +65,7 @@ export const visitDefaults: Visit = {
   invoice_number: "",
   status: VisitStatus.Draft,
   discharge_disposition: DischargeDisposition.NotDocumented,
+  encounters: [],
 };
 
 export interface ChargeableItem extends ID {
@@ -77,7 +80,7 @@ interface HCPCS extends ID {
   status_code: string;
 }
 
-interface Service extends ChargeableItem {
+export interface Service extends ChargeableItem {
   item: HCPCS;
 }
 
@@ -95,7 +98,7 @@ export enum PrescriptionDuration {
   Month = "MONTH",
   Year = "YEAR",
 }
-interface Prescription extends ChargeableItem {
+export interface Prescription extends ChargeableItem {
   drug: RxTerm;
   description: string;
   frequency: number;
@@ -136,7 +139,7 @@ export interface LOINC extends ID {
   long_common_name: string;
   status: string;
 }
-interface Observation extends ChargeableItem {
+export interface Observation extends ChargeableItem {
   loinc: LOINC;
   result: string;
 }
