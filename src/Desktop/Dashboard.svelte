@@ -1,16 +1,37 @@
 <script lang="ts">
-  import { link } from "svelte-spa-router";
+  import { onMount } from "svelte";
+  import { link, replace } from "svelte-spa-router";
 
-  import { userStore } from "../common-stores";
+  import { getValue, storeValue, userStore } from "../common-stores";
   import Patient from "./Patient.svelte";
   import RecordVisit from "./RecordVisit.svelte";
-  import Visit from "./Visit.svelte";
+  import { practitionerStore } from "./stores";
+  import Visit from "../Visit.svelte";
+  import { apiCall, logout } from "../utils";
 
   let tab = Patient;
+
+  let user,
+    practitioner = null;
+  onMount(async () => {
+    user = await getValue("user");
+    practitioner = await getValue("practitioner");
+    if (practitioner == null) {
+      apiCall(
+        `index/practitioners/${user["user"]["uuid"]}/`,
+        "GET",
+        (result) => {
+          practitioner = result["data"];
+          storeValue(practitionerStore, "practitioner", practitioner);
+        }
+      );
+    }
+  });
 </script>
 
 {#await $userStore then user}
   <div class="container is-fullhd">
+    <!-- svelte-ignore a11y-no-redundant-roles -->
     <nav
       class="navbar is-fixed-top is-info has-shadow"
       role="navigation"
@@ -19,6 +40,9 @@
       <div class="navbar-brand ml-3">
         <a class="navbar-item has-text-weight-bold" href="/" use:link>
           Elixir
+          {#if practitioner}
+            @ {practitioner["extra"]["latest_tenure"]["facility"]["name"]}
+          {/if}
         </a>
       </div>
 
@@ -27,6 +51,9 @@
           <div class="navbar-item">
             {user["user"]["first_name"]}
             {user["user"]["last_name"]}
+            {#if practitioner}
+              - {practitioner["extra"]["type"]}
+            {/if}
           </div>
           <div class="navbar-item">
             <figure class="image">
@@ -44,11 +71,6 @@
     <div class="columns">
       <div class="column is-one-fifth">
         <aside class="menu">
-          <p class="menu-label">Home</p>
-          <ul class="menu-list">
-            <li><a>Access Requests</a></li>
-            <li><a>My History</a></li>
-          </ul>
           <p class="menu-label">Patients</p>
           <ul class="menu-list">
             <!-- svelte-ignore a11y-missing-attribute -->
@@ -78,15 +100,30 @@
           </ul>
           <p class="menu-label">Statistics</p>
           <ul class="menu-list">
+            <!-- svelte-ignore a11y-missing-attribute -->
             <li><a>Visits</a></li>
+            <!-- svelte-ignore a11y-missing-attribute -->
             <li><a>Diagnoses</a></li>
+            <!-- svelte-ignore a11y-missing-attribute -->
             <li><a>Prescriptions</a></li>
+            <!-- svelte-ignore a11y-missing-attribute -->
             <li><a>Billing</a></li>
           </ul>
+          <p
+            class="menu-label is-clickable"
+            on:click={() => {
+              logout();
+              replace("/login");
+            }}
+          >
+            Logout
+          </p>
         </aside>
       </div>
       <div class="column">
-        <svelte:component this={tab} bind:tab />
+        {#if practitioner}
+          <svelte:component this={tab} bind:tab />
+        {/if}
       </div>
     </div>
   </div>

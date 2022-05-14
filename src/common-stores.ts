@@ -20,3 +20,5 @@ export async function deleteValue(store, key: string) {
 }
 
 export const userStore = writable(getValue("user"));
+export const patientStore = writable(getValue("patient"));
+export const visitRecordStore = writable(getValue("visit-record"));

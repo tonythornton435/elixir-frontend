@@ -39,6 +39,7 @@
     "bulma": "^0.9.3",
     "bulma-list": "^1.2.0",
     "bulma-timeline": "^3.0.5",
+    "bulma-toast": "^2.4.1",
     "jwt-decode": "^3.1.2",
     "marked": "^4.0.14",
     "qrcode": "^1.5.0",

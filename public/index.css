@@ -1,24 +1,30 @@
 .is-hidden {
-    display: none;
+  display: none;
 }
 .silver-separator {
-    border-top: 1px solid silver;
+  border-top: 1px solid silver;
 }
 .not-clickable {
-    pointer-events: none;
+  pointer-events: none;
 }
 .menu {
-    position: sticky;
-    display: inline-block;
-    vertical-align: top;
-    max-height: 100vh;
-    overflow-y: auto;
-    width: 200px;
-    top: 0;
-    bottom: 0;
-    padding-top: 32px;
-    padding-left: 8px;
+  position: fixed;
+  display: inline-block;
+  vertical-align: top;
+  max-height: 100vh;
+  overflow-y: auto;
+  width: 200px;
+  top: 0;
+  bottom: 0;
+  padding-top: 140px;
+  padding-left: 8px;
+  border-right: 1px solid silver;
 }
 .content {
-    display: inline-block;
+  display: inline-block;
+}
+@media (max-width: 641px) {
+  .has-navbar-fixed-top {
+    padding-top: 0 !important;
+  }
 }

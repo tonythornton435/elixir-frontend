@@ -1,16 +1,17 @@
 <script lang="ts">
   import {
-    mdiEmail,
-    mdiFaceMan,
-    mdiHumanMaleFemaleChild,
-    mdiIdCard,
-    mdiPhone,
     mdiAccountLock,
     mdiAlertCircle,
     mdiBaby,
-    mdiFaceWoman,
     mdiCheckAll,
+    mdiEmail,
+    mdiFaceMan,
+    mdiFaceWoman,
+    mdiHumanMaleFemaleChild,
+    mdiIdCard,
+    mdiPhone,
   } from "@mdi/js";
+  import { toast } from "bulma-toast";
   import Icon from "mdi-svelte";
   import { link, push } from "svelte-spa-router";
 
@@ -20,13 +21,12 @@
     password: string,
     passwordConfirmation: string,
     firstName: string,
-    surname: string,
+    lastName: string,
     nationalID: string,
     gender: string,
     dateOfBirth: string,
     phoneNumber: string;
-  let passwordsMatch = true,
-    signUpFailed = false;
+  let passwordsMatch = true;
 
   window.addEventListener("load", () => {
     (document.getElementById("dateOfBirth") as HTMLInputElement).max =
@@ -43,20 +43,30 @@
       await apiCall(
         "auth/register/",
         "POST",
-        async (result) => {
+        (result) => {
           push("/login");
         },
         {
           email,
           password,
           first_name: firstName,
-          surname,
+          last_name: lastName,
           national_id: nationalID,
           gender: gender,
           date_of_birth: dateOfBirth,
           phone_number: phoneNumber,
         },
-        () => (signUpFailed = true)
+        () => {
+          toast({
+            message:
+              "Failed. The email is <strong>probably</strong> taken, lol.",
+            type: "is-danger",
+            dismissible: true,
+            pauseOnHover: true,
+            position: "top-center",
+            duration: 4000,
+          });
+        }
       );
     }}
   >
@@ -69,12 +79,6 @@
         />
       </figure>
     </div>
-
-    {#if signUpFailed}
-      <div class="notification is-danger">
-        Failed. The email is <strong>probably</strong> taken, lol.
-      </div>
-    {/if}
 
     <div class="field">
       <label class="label" for="firstName">First Name</label>
@@ -93,13 +97,13 @@
       </div>
     </div>
     <div class="field">
-      <label class="label" for="surname">Surname</label>
+      <label class="label" for="lastName">Last Name</label>
       <div class="control has-icons-left">
         <input
-          bind:value={surname}
+          bind:value={lastName}
           class="input"
           type="text"
-          id="surname"
+          id="lastName"
           placeholder="Doe"
           required
         />
@@ -247,7 +251,7 @@
       </div>
       <div class="control">
         <button class="button is-link is-light">
-          <a href="/login" use:link>Sign In</a>
+          <a href="/practitioner-signup" use:link>Sign In</a>
         </button>
       </div>
     </div>

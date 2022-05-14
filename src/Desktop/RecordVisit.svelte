@@ -20,7 +20,9 @@
     mdiPrescription,
     mdiReceipt,
     mdiStethoscope,
+    mdiTrashCan,
   } from "@mdi/js";
+  import { toast } from "bulma-toast";
   import { marked } from "marked";
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
@@ -53,6 +55,8 @@
   export let tab = this;
 
   let patient,
+    practitioner,
+    author_id,
     visit: Visit,
     visitStarted = false,
     consultation: Encounter = structuredClone(encounterDefaults),
@@ -82,15 +86,17 @@
   onMount(async () => {
     bulma();
     patient = await getValue("patient");
+    practitioner = await getValue("practitioner");
+    author_id = practitioner["extra"]["latest_tenure"]["uuid"];
     if (patient === null) {
       tab = Patient;
     }
 
     visit = (await getValue("visit")) || visitDefaults;
     if (consultation.author_id === null) {
-      consultation.author_id = "79aa1228-2313-4f69-8ece-a79c3b738205"; // TODO
-      labs.author_id = "79aa1228-2313-4f69-8ece-a79c3b738205";
-      nurseMeasurements.author_id = "79aa1228-2313-4f69-8ece-a79c3b738205";
+      consultation.author_id = author_id;
+      labs.author_id = author_id;
+      nurseMeasurements.author_id = author_id;
     }
     visitStarted = visit.type != null;
     consultation = (await getValue("consultation")) || consultation;
@@ -128,6 +134,17 @@
   let HCPCSs = [],
     HCPCSSearchQuery: string,
     searchingHCPCS = false;
+
+  function resultsToast(n) {
+    toast({
+      message: `${n} ${n == 1 ? "match" : "matches"} found.`,
+      type: n == 0 ? "is-warning" : "is-success",
+      dismissible: false,
+      pauseOnHover: true,
+      position: "top-right",
+      duration: 2000,
+    });
+  }
 </script>
 
 {#if patient && visit && consultation && nurseMeasurements && labs}
@@ -247,12 +264,30 @@
             </span>
           </div>
         </div>
-        <button class="button is-info" type="submit" disabled={visitStarted}>
-          <span class="icon is-small">
-            <Icon path={mdiCalendarStart} />
-          </span>
-          <span>Start Visit</span>
-        </button>
+        {#if !visitStarted}
+          <button class="button is-info" type="submit">
+            <span class="icon is-small">
+              <Icon path={mdiCalendarStart} />
+            </span>
+            <span>Start Visit</span>
+          </button>
+        {:else}
+          <button
+            class="button is-warning"
+            on:click={() => {
+              storeValue(visitStore, "visit", null);
+              storeValue(nurseMeasurementsStore, "nurse-measurements", null);
+              storeValue(consultationStore, "consultation", null);
+              storeValue(labsStore, "labs", null);
+              tab = Patient;
+            }}
+          >
+            <span class="icon is-small">
+              <Icon path={mdiTrashCan} />
+            </span>
+            <span>Discard Changes</span>
+          </button>
+        {/if}
       </form>
     </div>
 
@@ -451,6 +486,7 @@
                   (result) => {
                     LOINCs = result["data"];
                     console.log(LOINCs);
+                    resultsToast(LOINCs.length);
                   },
                   { query: LOINCSearchQuery }
                 );
@@ -513,6 +549,7 @@
                   "POST",
                   (result) => {
                     ICD10s = result["data"];
+                    resultsToast(ICD10s.length);
                   },
                   { query: ICD10SearchQuery }
                 );
@@ -641,6 +678,7 @@
                   (result) => {
                     HCPCSs = result["data"];
                     console.log(HCPCSs);
+                    resultsToast(HCPCSs.length);
                   },
                   { query: HCPCSSearchQuery }
                 );
@@ -729,6 +767,7 @@
                   (result) => {
                     RxTerms = result["data"];
                     console.log(RxTerms);
+                    resultsToast(RxTerms.length);
                   },
                   { query: RxTermSearchQuery }
                 );
@@ -1060,10 +1099,10 @@
             async (result) => {
               let visit = result["data"];
               console.log(visit);
-              storeValue(visitStore, "visit", null);
-              storeValue(nurseMeasurementsStore, "nurse-measurements", null);
-              storeValue(consultationStore, "consultation", null);
-              storeValue(labsStore, "labs", null);
+              // storeValue(visitStore, "visit", null);
+              // storeValue(nurseMeasurementsStore, "nurse-measurements", null);
+              // storeValue(consultationStore, "consultation", null);
+              // storeValue(labsStore, "labs", null);
               tab = Patient;
             },
             prepForPOST(visit)

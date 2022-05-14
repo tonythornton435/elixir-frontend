@@ -1,36 +1,74 @@
 <script lang="ts">
-  import { mdiCalendar, mdiDoctor, mdiHospitalBuilding } from "@mdi/js";
+  import {
+    mdiCalendar,
+    mdiCheckAll,
+    mdiDoctor,
+    mdiHospitalBuilding,
+  } from "@mdi/js";
+  import { toast } from "bulma-toast";
   import Icon from "mdi-svelte";
-  import { afterUpdate, onMount } from "svelte";
+  import { onMount } from "svelte";
+  import { link, push } from "svelte-spa-router";
 
-  import { apiCall, bulma } from "../utils";
-
-  onMount(bulma);
-  afterUpdate(bulma);
+  import { getValue } from "../common-stores";
+  import { apiCall } from "../utils";
 
   let facilities = [],
     practitionerType,
     tenureStart,
     facilityID,
-    saveFailed = false;
+    user;
 
-  apiCall(
-    "index/facilities/",
-    "GET",
-    (result) => {
+  onMount(async () => {
+    user = await getValue("user");
+    await apiCall("index/facilities/", "GET", (result) => {
       facilities = result["data"];
-    },
-  );
-
-  async function handleSubmit() {}
+    });
+  });
 </script>
 
-<div class="container is-fluid mt-6 mb-4">
-  <form on:submit|preventDefault={handleSubmit}>
-    {#if saveFailed}
-      <div class="notification is-danger">Failed. Please try again.</div>
-    {/if}
+<div class="columns is-flex is-centered">
+  <figure class="image">
+    <img
+      src="/assets/undraw_doctor_kw-5-l.svg"
+      alt="Doctor"
+      style="width:256px;height:auto;"
+    />
+  </figure>
+</div>
 
+<div class="container is-fluid mt-6 mb-4">
+  <form
+    on:submit|preventDefault={async () => {
+      await apiCall(
+        "index/practitioners/new/",
+        "POST",
+        (result) => {
+          push("/login");
+        },
+        {
+          user_id: user["user"]["uuid"],
+          type: practitionerType,
+          employment_history: [
+            {
+              facility_id: facilityID,
+              start: tenureStart,
+            },
+          ],
+        },
+        () => {
+          toast({
+            message: "Failed. Please try again",
+            type: "is-danger",
+            dismissible: true,
+            pauseOnHover: true,
+            position: "top-center",
+            duration: 4000,
+          });
+        }
+      );
+    }}
+  >
     <div class="field">
       <label class="label" for="practitionerType">Practitioner Type</label>
       <div class="control has-icons-left">
@@ -83,6 +121,22 @@
         <span class="icon is-small is-left">
           <Icon path={mdiCalendar} />
         </span>
+      </div>
+    </div>
+
+    <div class="field is-grouped is-grouped-centered mt-4">
+      <div class="control">
+        <button class="button is-info" type="submit">
+          <span class="icon is-small">
+            <Icon path={mdiCheckAll} />
+          </span>
+          <span>Sign Up</span>
+        </button>
+      </div>
+      <div class="control">
+        <button class="button is-link is-light">
+          <a href="/login" use:link>Login</a>
+        </button>
       </div>
     </div>
   </form>

@@ -1,12 +1,13 @@
-<div class="w-full">
-  <div class="flex items-center justify-center">
+<div class="columns is-flex is-centered">
+  <figure class="image">
     <img
       src="/assets/undraw_page_not_found.svg"
-      class="px-8 my-4 w-full max-w-lg"
       alt="404 illustration"
+      style="width:256px;height:auto;"
     />
-  </div>
-  <div class="flex items-center justify-center">
-    <p>404: Not Found!</p>
-  </div>
+  </figure>
+</div>
+
+<div class="has-text-centered">
+  <p class="is-size-2 mt-4">404: Not Found!</p>
 </div>

@@ -6,8 +6,9 @@
   import { get } from "svelte/store";
 
   import { userStore } from "../common-stores";
-  import Loading from "../Loading.svelte";
-  import { logout } from "../utils";
+  import { apiCall, logout, toDateString } from "../utils";
+
+  let accessRequests = [];
 
   onMount(async () => {
     let user = await get(userStore);
@@ -18,12 +19,19 @@
         if (error) console.error(error);
       }
     );
+
+    await apiCall(
+      `index/records/users/${user["user"]["uuid"]}/consent/`,
+      "GET",
+      (result) => {
+        accessRequests = result["data"];
+        console.log(result);
+      }
+    );
   });
 </script>
 
-{#await $userStore}
-  <Loading />
-{:then user}
+{#await $userStore then user}
   <div class="container is-fluid mt-6">
     <div class="columns is-flex is-centered">
       <figure class="image">
@@ -55,12 +63,44 @@
       {user["user"]["uuid"]}
     </p>
 
-    <!--Consent Requests-->
+    <!--Access Requests-->
+    <p class="is-size-4 mt-2">Access Requests</p>
+    <div
+      class="list has-visible-pointer-controls has-hoverable-list-items has-overflow-ellipsis"
+    >
+      {#each accessRequests as accessRequest}
+        <div class="list-item">
+          <div class="list-item-content">
+            <div class="list-item-title">
+              {toDateString(accessRequest.created, true)}
+            </div>
+            <div class="list-item-description">
+              {accessRequest.requestor.practitioner.user.first_name}
+              {accessRequest.requestor.practitioner.user.last_name}
+              <p style="white-space: pre-wrap;">{accessRequest.request_note}</p>
+            </div>
+          </div>
 
-    <!--Current Visits-->
-
-    <!--Next of Kin(s)-->
-
-    <!--Link to update profile-->
+          <div class="list-item-controls">
+            {#if accessRequest.status == "PENDING"}
+              <div class="tags are-normal">
+                <span class="tag is-info">PENDING</span>
+                <span class="tag is-dark">Doc</span>
+              </div>
+            {:else if accessRequest.status == "APPROVED"}
+              <div class="tags are-normal">
+                <span class="tag is-success">GRANTED</span>
+                <span class="tag is-dark">Doc</span>
+              </div>
+            {:else}
+              <div class="tags are-normal">
+                <span class="tag is-warning">WITHDRAWN</span>
+                <span class="tag is-dark">Doc</span>
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
   </div>
 {/await}

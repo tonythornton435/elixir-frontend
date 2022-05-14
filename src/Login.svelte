@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Storage } from "@capacitor/storage";
   import { mdiAccountLock, mdiCheckAll, mdiEmail } from "@mdi/js";
+  import { toast } from "bulma-toast";
   import Icon from "mdi-svelte";
   import { link, push } from "svelte-spa-router";
 
@@ -8,7 +9,6 @@
   import { apiCall } from "./utils";
 
   let email: string, password: string;
-  let loginFailed = false;
 </script>
 
 <div class="container is-fluid" style="padding-top: 128px;">
@@ -18,7 +18,6 @@
         "auth/login/",
         "POST",
         async (result) => {
-          loginFailed = false;
           userStore.set(Promise.resolve(result["data"]));
           await Storage.set({
             key: "user",
@@ -30,7 +29,16 @@
           email,
           password,
         },
-        () => (loginFailed = true)
+        () => {
+          toast({
+            message: "Login failed.",
+            type: "is-danger",
+            dismissible: true,
+            pauseOnHover: true,
+            position: "top-center",
+            duration: 4000,
+          });
+        }
       );
     }}
   >
@@ -43,10 +51,6 @@
         />
       </figure>
     </div>
-
-    {#if loginFailed}
-      <div class="notification is-danger">Login failed.</div>
-    {/if}
 
     <div class="field">
       <label class="label" for="email">Email Address</label>

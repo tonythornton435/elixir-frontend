@@ -2,20 +2,26 @@
   import {
     mdiCheckDecagramOutline,
     mdiEyeCheck,
+    mdiEyeRefresh,
     mdiEyeRemove,
     mdiFaceRecognition,
     mdiHospitalMarker,
     mdiMagnify,
     mdiWindowClose,
   } from "@mdi/js";
+  import { marked } from "marked";
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
   import { Shadow } from "svelte-loading-spinners";
   import StarRating from "svelte-star-rating";
 
-  import { getValue, storeValue } from "../common-stores";
+  import {
+    getValue,
+    patientStore,
+    storeValue,
+    visitRecordStore,
+  } from "../common-stores";
   import RecordVisit from "./RecordVisit.svelte";
-  import { patientStore, visitRecordStore } from "./stores";
   import {
     apiCall,
     bulma,
@@ -23,17 +29,22 @@
     onInputSearchDataList,
     toDateString,
   } from "../utils";
-  import Visit from "./Visit.svelte";
+  import Visit from "../Visit.svelte";
 
   export let tab = this;
 
   let patient,
+    practitioner,
+    author_id,
     records = [],
-    fetch_records = true;
+    fetch_records = true,
+    request_note = "";
 
   onMount(async () => {
     bulma();
     patient = await getValue("patient");
+    practitioner = await getValue("practitioner");
+    author_id = practitioner["extra"]["latest_tenure"]["uuid"];
   });
   afterUpdate(bulma);
 
@@ -42,7 +53,9 @@
       apiCall(`index/records/users/${patient["uuid"]}`, "GET", (result) => {
         records = [];
         for (let record of result["data"]) {
-          record["rating"] = Number.parseFloat(record["rating"]);
+          record["rating"] = record["rating"]
+            .split(",")
+            .map((x) => Number.parseFloat(x));
           records.push(record);
         }
         fetch_records = false;
@@ -53,6 +66,7 @@
 
   let searching = false,
     patients = [],
+    no_records_found = false,
     query: string;
 </script>
 
@@ -70,6 +84,7 @@
         (result) => {
           patients = result["data"];
           searching = false;
+          no_records_found = patients.length == 0;
         },
         { query }
       );
@@ -254,7 +269,7 @@
                 <div class="list-item-description">
                   {record.visit_type} visit @ {record.facility.name}
                   <StarRating
-                    rating={record.rating}
+                    rating={(record.rating[0] + record.rating[1]) / 2}
                     config={{ showText: true }}
                   />
                 </div>
@@ -262,18 +277,104 @@
 
               <div class="list-item-controls">
                 <div class="buttons is-right">
-                  <button
-                    class="button"
-                    on:click={() => {
-                      storeValue(visitRecordStore, "visit-record", record);
-                      tab = Visit;
-                    }}
-                  >
-                    <span class="icon is-small">
-                      <Icon path={mdiEyeCheck} />
-                    </span>
-                    <span>View</span>
-                  </button>
+                  {#if record.access_status == "APPROVED"}
+                    <button
+                      class="button"
+                      on:click={async () => {
+                        storeValue(visitRecordStore, "visit-record", record);
+                        await apiCall(
+                          "index/records/logs/new/",
+                          "POST",
+                          (result) => {
+                            console.log(result);
+                          },
+                          {
+                            practitioner_id: author_id,
+                            record_id: record["uuid"],
+                          }
+                        );
+                        tab = Visit;
+                      }}
+                    >
+                      <span class="icon is-small">
+                        <Icon path={mdiEyeCheck} />
+                      </span>
+                      <span>View</span>
+                    </button>
+                  {:else if record.access_status == "PENDING"}
+                    <button class="button" on:click={() => {}}>
+                      <span class="icon is-small">
+                        <Icon path={mdiEyeRefresh} />
+                      </span>
+                      <span>Pending Approval</span>
+                    </button>
+                  {:else}
+                    <button
+                      class="button js-modal-trigger"
+                      data-target={`access-request-modal-${record.uuid}`}
+                    >
+                      <span class="icon is-small">
+                        <Icon path={mdiEyeRemove} />
+                      </span>
+                      <span>Request Access</span>
+                    </button>
+                    <div
+                      class="modal"
+                      id={`access-request-modal-${record.uuid}`}
+                    >
+                      <div class="modal-background" />
+                      <div class="modal-card">
+                        <form
+                          on:submit|preventDefault={async () => {
+                            await apiCall(
+                              "index/records/consent/new/",
+                              "POST",
+                              (result) => {
+                                console.log(result);
+                              },
+                              {
+                                record_id: record.uuid,
+                                requestor_id: author_id,
+                                status: "PENDING",
+                                request_note,
+                              }
+                            );
+                          }}
+                          style="width: 100% !important;"
+                          class="mt-3"
+                        >
+                          <header class="modal-card-head">
+                            <p class="modal-card-title">Request Access</p>
+                            <button class="delete" aria-label="close" />
+                          </header>
+                          <section class="modal-card-body">
+                            <div class="field">
+                              <!-- svelte-ignore a11y-label-has-associated-control -->
+                              <label class="label">Request Notes</label>
+                              <div class="box">
+                                {@html marked(request_note)}
+                              </div>
+                              <div class="control">
+                                <textarea
+                                  bind:value={request_note}
+                                  class="textarea is-info"
+                                  rows="8"
+                                  placeholder="Enter request notes (in Markdown)"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </section>
+                          <footer class="modal-card-foot">
+                            <button class="button is-success" type="submit"
+                              >Save</button
+                            >
+                            <button class="button">Cancel</button>
+                          </footer>
+                        </form>
+                      </div>
+                    </div>
+                  {/if}
                 </div>
               </div>
             </div>
@@ -281,13 +382,19 @@
         </div>
       </div>
     </div>
-  {:else if patients.length == 0}
-    <img
-      src="/assets/undraw_notify_re_65on.svg"
-      class="px-8 my-4 w-full max-w-lg"
-      alt="Notify"
-      style="width:256px;height:256px;"
-    />
-    <p class="has-text-weight-bold">No matching results!</p>
+  {:else if no_records_found}
+    <div class="columns is-flex is-centered">
+      <figure class="image">
+        <img
+          src="/assets/undraw_notify_re_65on.svg"
+          class="px-8 my-4 w-full max-w-lg"
+          alt="Notify"
+          style="width:256px;height:256px;"
+        />
+      </figure>
+    </div>
+    <div class="has-text-centered">
+      <p class="has-text-weight-bold">No matching results!</p>
+    </div>
   {/if}
 </div>

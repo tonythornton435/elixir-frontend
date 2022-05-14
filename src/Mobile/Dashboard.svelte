@@ -4,7 +4,6 @@
   import { replace } from "svelte-spa-router";
 
   import { userStore } from "../common-stores";
-  import Loading from "../Loading.svelte";
   import Home from "../Mobile/Home.svelte";
   import Providers from "../Mobile/Providers.svelte";
   import VisitHistory from "../Mobile/VisitHistory.svelte";
@@ -12,11 +11,9 @@
   let tab = Home;
 </script>
 
-{#await $userStore}
-  <Loading />
-{:then user}
+{#await $userStore then user}
   {#if user !== null}
-    <svelte:component this={tab} />
+    <svelte:component this={tab} bind:tab />
 
     <!-- svelte-ignore a11y-no-redundant-roles -->
     <nav class="navbar is-link is-fixed-bottom" role="navigation">

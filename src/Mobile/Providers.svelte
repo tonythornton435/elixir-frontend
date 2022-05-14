@@ -17,30 +17,21 @@
   import { afterUpdate, onMount } from "svelte";
 
   import { apiCall, bulma } from "../utils";
-  import NoMatchingResults from "../NoMatchingResults.svelte";
 
   let query: string,
     searching = false,
     facilities = [],
     practitioners = [];
 
-  apiCall(
-    "index/facilities/",
-    "GET",
-    (result) => {
-      console.log(result);
-      facilities = result["data"];
-    },
-  );
+  apiCall("index/facilities/", "GET", (result) => {
+    console.log(result);
+    facilities = result["data"];
+  });
 
-  apiCall(
-    "index/practitioners/",
-    "GET",
-    (result) => {
-      console.log(result);
-      practitioners = result["data"];
-    },
-  );
+  apiCall("index/practitioners/", "GET", (result) => {
+    console.log(result);
+    practitioners = result["data"];
+  });
 
   onMount(bulma);
   afterUpdate(bulma);
@@ -94,11 +85,17 @@
       </form>
     </div>
     <p class="panel-tabs">
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a class="is-active">All</a>
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a>Clinics</a>
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a>Practitioners</a>
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a>Pharmacies</a>
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a>Labs</a>
+      <!-- svelte-ignore a11y-missing-attribute -->
       <a>Other</a>
     </p>
     {#if facilities.length + practitioners.length > 0 || !searching}
@@ -149,6 +146,7 @@
             </footer>
           </div>
         </div>
+        <!-- svelte-ignore a11y-missing-attribute -->
         <a class="panel-block js-modal-trigger" data-target={facility["uuid"]}>
           <span class="icon-text">
             <span class="icon">
@@ -172,7 +170,18 @@
         </a>
       {/each}
     {:else}
-      <NoMatchingResults />
+      <div class="w-full">
+        <div class="flex items-center justify-center">
+          <img
+            src="/assets/undraw_notify_re_65on.svg"
+            class="px-8 my-4 w-full max-w-lg"
+            alt="Notify"
+          />
+        </div>
+        <div class="flex items-center justify-center">
+          <p>No matching results!</p>
+        </div>
+      </div>
     {/if}
   </nav>
 </div>

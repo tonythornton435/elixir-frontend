@@ -1,35 +1,48 @@
 <script lang="ts">
-  import { mdiCheckDecagramOutline, mdiWindowClose } from "@mdi/js";
+  import { Capacitor } from "@capacitor/core";
+  import {
+    mdiCheckAll,
+    mdiCheckDecagramOutline,
+    mdiStar,
+    mdiWindowClose,
+  } from "@mdi/js";
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
   import StarRating from "svelte-star-rating";
 
-  import { getValue } from "../common-stores";
+  import { getValue } from "./common-stores";
   import type {
     ICD10,
     Observation,
     Prescription,
     Service,
     Visit,
-  } from "../types";
-  import { apiCall, bulma, toDateString } from "../utils";
+  } from "./types";
+  import { apiCall, bulma, toDateString } from "./utils";
 
   export let tab = this;
 
   let visit: Visit,
     visitRecord,
     patient,
+    user,
     diagnoses: ICD10[] = [],
     prescriptions: Prescription[] = [],
     labs: Observation[] = [],
     services: Service[] = [],
     billTotal = 0,
     paidTotal = 0,
-    events = [];
+    events = [],
+    review = "",
+    accuracyRating = 0,
+    completenessRating = 0,
+    accuracyRatingBuffer,
+    completenessRatingBuffer;
 
   onMount(async () => {
     bulma();
     visitRecord = await getValue("visit-record");
+    user = await getValue("user");
     apiCall(`facility/visits/${visitRecord["uuid"]}/`, "GET", (result) => {
       visit = result["data"];
       console.log(visit);
@@ -41,7 +54,6 @@
         services = [...services, ...encounter.services];
       }
       let chargeableItems = [...labs, ...prescriptions, ...services];
-      console.log(chargeableItems);
       billTotal = chargeableItems.reduce(
         (acc, x) => acc + x.quantity * (x.unit_price || 0),
         0
@@ -73,7 +85,7 @@
       for (let i = 0; i < visitRecord["consent_requests"].length; i++) {
         let access_request = visitRecord["consent_requests"][i];
         events.push({
-          name: `${access_request["requestor"]["practitioner"]["user"]["first_name"]} ${access_request["requestor"]["practitioner"]["user"]["last_name"]} from ${access_request["requestor"]["facility"]["name"]} requested access (ID: ${i})`,
+          name: `${access_request["requestor"]["practitioner"]["user"]["first_name"]} ${access_request["requestor"]["practitioner"]["user"]["last_name"]} from ${access_request["requestor"]["facility"]["name"]} requested access, "${access_request["request_note"]}" (ID: ${i})`,
           timestamp: toDateString(access_request["created"], true),
           rawDate: new Date(access_request["created"]),
           color: "is-warning",
@@ -96,16 +108,23 @@
         });
       }
       for (let rating of visitRecord["ratings"]) {
+        let overallRating = (rating["accuracy"] + rating["completeness"]) / 2;
         events.push({
-          name: `${rating["rater"]["first_name"]} ${
-            rating["rater"]["last_name"]
-          } rated ${(rating["accuracy"] + rating["completeness"]) / 2}⭐, ${
-            rating["review"]
-          }`,
+          name: `${rating["rater"]["first_name"]} ${rating["rater"]["last_name"]} rated ${overallRating}⭐, "${rating["review"]}"`,
           timestamp: toDateString(rating["created"], true),
           rawDate: new Date(rating["created"]),
-          color: "is-info",
+          color:
+            overallRating >= 4
+              ? "is-success"
+              : overallRating >= 3
+              ? "is-warning"
+              : "is-error",
         });
+        if (rating["rater"]["uuid"] == user["user"]["uuid"]) {
+          accuracyRating = rating["accuracy"];
+          completenessRating = rating["completeness"];
+          review = rating["review"];
+        }
       }
       events.sort((a, b) => a["rawDate"] - b["rawDate"]);
     });
@@ -115,7 +134,12 @@
 </script>
 
 {#if visit && patient}
-  <div class="container mt-4">
+  <div
+    class="container"
+    class:mt-4={!Capacitor.isNativePlatform()}
+    class:mx-1={Capacitor.isNativePlatform()}
+    class:mb-6={Capacitor.isNativePlatform()}
+  >
     <!-- Visit Particulars -->
     <div class="divider">Visit Particulars</div>
     <table class="table is-striped is-hoverable is-fullwidth">
@@ -145,10 +169,19 @@
           <td>{visit.discharge_disposition}</td>
         </tr>
         <tr>
-          <td class="has-text-weight-bold">Trust Score</td>
+          <td class="has-text-weight-bold">Accuracy Score</td>
           <td>
             <StarRating
-              rating={visitRecord["rating"]}
+              rating={visitRecord["rating"][0]}
+              config={{ showText: true }}
+            /></td
+          >
+        </tr>
+        <tr>
+          <td class="has-text-weight-bold">Completeness Score</td>
+          <td>
+            <StarRating
+              rating={visitRecord["rating"][1]}
               config={{ showText: true }}
             /></td
           >
@@ -287,6 +320,116 @@
       </tfoot>
     </table>
 
+    <!--My Rating-->
+    <div class="divider">My Rating</div>
+    {#if accuracyRating == 0 || completenessRating == 0}
+      <form
+        on:submit|preventDefault={async () => {
+          await apiCall(
+            "index/records/ratings/new/",
+            "POST",
+            (result) => {
+              console.log(result);
+              accuracyRating = accuracyRatingBuffer;
+              completenessRating = completenessRatingBuffer;
+            },
+            {
+              record_id: visitRecord["uuid"],
+              rater_id: user["user"]["uuid"],
+              accuracy: accuracyRatingBuffer,
+              completeness: completenessRatingBuffer,
+              review,
+            }
+          );
+        }}
+      >
+        <div class="columns">
+          <div class="column is-half">
+            <div class="field">
+              <label class="label" for="accuracyRatingBuffer">Accuracy</label>
+              <div class="control has-icons-left">
+                <div class="select">
+                  <select
+                    id="accuracyRatingBuffer"
+                    bind:value={accuracyRatingBuffer}
+                    required
+                  >
+                    <option value={5}>5</option>
+                    <option value={4}>4</option>
+                    <option value={3}>3</option>
+                    <option value={2}>2</option>
+                    <option value={1}>1</option>
+                  </select>
+                </div>
+                <span class="icon is-small is-left">
+                  <Icon path={mdiStar} />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="column is-half">
+            <div class="field">
+              <label class="label" for="completenessRatingBuffer"
+                >Completeness</label
+              >
+              <div class="control has-icons-left">
+                <div class="select">
+                  <select
+                    id="completenessRatingBuffer"
+                    bind:value={completenessRatingBuffer}
+                    required
+                  >
+                    <option value={5}>5</option>
+                    <option value={4}>4</option>
+                    <option value={3}>3</option>
+                    <option value={2}>2</option>
+                    <option value={1}>1</option>
+                  </select>
+                </div>
+                <span class="icon is-small is-left">
+                  <Icon path={mdiStar} />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="recordReview">Notes</label>
+          <div class="control">
+            <textarea
+              bind:value={review}
+              class="textarea is-info"
+              rows="4"
+              id="recordReview"
+              placeholder="Enter record review"
+              required
+            />
+          </div>
+        </div>
+        <button class="button is-info" type="submit">
+          <span class="icon is-small">
+            <Icon path={mdiCheckAll} />
+          </span>
+          <span>Save Rating</span>
+        </button>
+      </form>
+    {:else}
+      <div class="columns has-text-weight-bold mx-1">
+        <div class="column is-half">
+          Accuracy
+          <StarRating rating={accuracyRating} config={{ showText: true }} />
+        </div>
+        <div class="column is-half">
+          Completeness
+          <StarRating rating={completenessRating} config={{ showText: true }} />
+        </div>
+      </div>
+      <div class="box mx-2">
+        {review}
+      </div>
+    {/if}
+
     <!--Timeline-->
     <div class="divider">Timeline</div>
     <div class="timeline is-centered">
@@ -304,7 +447,7 @@
           </div>
         </div>
       {/each}
-      <header class="timeline-header">
+      <header class="timeline-header" class:mb-2={Capacitor.isNativePlatform()}>
         <span class="tag is-medium is-primary">End</span>
       </header>
     </div>

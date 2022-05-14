@@ -66,6 +66,7 @@ export function prepForPOST(data: object) {
 
 export async function logout() {
   deleteValue(userStore, "user");
+  localStorage.clear();
 }
 
 export function onInputSearchDataList(
@@ -96,7 +97,7 @@ export function toDateString(dateObj: Date | string, appendTime = false) {
   });
 
   if (appendTime) {
-    result += ` ${date.getUTCHours().toString().padStart(2, "0")}:${date
+    result += ` ${(date.getUTCHours() + 3).toString().padStart(2, "0")}:${date
       .getUTCMinutes()
       .toString()
       .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`;
