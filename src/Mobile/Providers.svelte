@@ -18,6 +18,8 @@
 
   import { apiCall, bulma } from "../utils";
 
+  export let tab = this;
+
   let query: string,
     searching = false,
     facilities = [],

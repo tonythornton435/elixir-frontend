@@ -22,11 +22,11 @@
     mdiStethoscope,
     mdiTrashCan,
   } from "@mdi/js";
+  import structuredClone from "@ungap/structured-clone";
   import { toast } from "bulma-toast";
   import { marked } from "marked";
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
-  import structuredClone from "@ungap/structured-clone";
 
   import { getValue, storeValue } from "../common-stores";
   import Patient from "./Patient.svelte";
@@ -43,6 +43,7 @@
     Encounter,
     EncounterClass,
     EncounterStatus,
+    HCPCS,
     LOINC,
     PrescriptionDuration,
     Visit,
@@ -62,10 +63,11 @@
     consultation: Encounter = structuredClone(encounterDefaults),
     labs: Encounter = structuredClone(encounterDefaults),
     nurseMeasurements: Encounter = structuredClone(encounterDefaults),
-    chargeableItems: ChargeableItem[] = [];
-  let selectedMeasurement: LOINC,
-    availableMeasurements: LOINC[] = [];
-  let billTotal = 0,
+    chargeableItems: ChargeableItem[] = [],
+    consultationCodes: HCPCS[] = [],
+    selectedMeasurement: LOINC,
+    availableMeasurements: LOINC[] = [],
+    billTotal = 0,
     paidTotal = 0;
 
   $: {
@@ -101,8 +103,10 @@
     visitStarted = visit.type != null;
     consultation = (await getValue("consultation")) || consultation;
     labs = (await getValue("labs")) || labs;
+    labs.type = EncounterClass.ObservationEncounter;
     nurseMeasurements =
       (await getValue("nurse-measurements")) || nurseMeasurements;
+    nurseMeasurements.type = EncounterClass.ObservationEncounter;
     const observedCodes = nurseMeasurements.observations.map(
       (observation) => observation.loinc.code
     );
@@ -113,6 +117,11 @@
     );
     availableMeasurements = availableMeasurements.filter(
       (measurement) => !observedCodes.includes(measurement.code)
+    );
+    await apiCall(
+      "facility/hcpcs/consultation-codes/",
+      "GET",
+      (result) => (consultationCodes = result["data"])
     );
   });
   afterUpdate(bulma);
@@ -161,7 +170,7 @@
         <!-- svelte-ignore a11y-missing-attribute -->
         <a>
           <span class="icon is-small"><Icon path={mdiStethoscope} /></span>
-          <span>Measurements</span>
+          <span>Vital Signs</span>
         </a>
       </li>
       <li class="tab" id="consultationTab" class:not-clickable={!visitStarted}>
@@ -234,7 +243,6 @@
           storeValue(visitStore, "visit", visit);
           visitStarted = true;
           nurseMeasurements.start = new Date();
-          nurseMeasurements.type = EncounterClass.ObservationEncounter;
           storeValue(
             nurseMeasurementsStore,
             "nurse-measurements",
@@ -275,9 +283,13 @@
           <button
             class="button is-warning"
             on:click={() => {
+              visit = null;
               storeValue(visitStore, "visit", null);
+              nurseMeasurements = null;
               storeValue(nurseMeasurementsStore, "nurse-measurements", null);
+              consultation = null;
               storeValue(consultationStore, "consultation", null);
+              labs = null;
               storeValue(labsStore, "labs", null);
               tab = Patient;
             }}
@@ -356,6 +368,15 @@
             visit.type == VisitType.Inpatient
               ? EncounterClass.InpatientEncounter
               : EncounterClass.Ambulatory;
+          let consultationItem = VisitType.Outpatient
+            ? consultationCodes[0]
+            : consultationCodes[1];
+          consultation.services.push({
+            item: consultationItem,
+            unit_price: null,
+            quantity: 1,
+            is_paid: false,
+          });
           storeValue(consultationStore, "consultation", consultation);
           document.getElementById("consultationTab").dispatchEvent(clickEvent);
         }}
@@ -412,7 +433,6 @@
           storeValue(visitStore, "visit", visit);
           storeValue(consultationStore, "consultation", consultation);
           labs.start = new Date();
-          labs.type = EncounterClass.ObservationEncounter;
           storeValue(labsStore, "labs", labs);
           document.getElementById("labsTab").dispatchEvent(clickEvent);
         }}
@@ -1099,13 +1119,32 @@
             async (result) => {
               let visit = result["data"];
               console.log(visit);
-              // storeValue(visitStore, "visit", null);
-              // storeValue(nurseMeasurementsStore, "nurse-measurements", null);
-              // storeValue(consultationStore, "consultation", null);
-              // storeValue(labsStore, "labs", null);
+              storeValue(visitStore, "visit", null);
+              storeValue(nurseMeasurementsStore, "nurse-measurements", null);
+              storeValue(consultationStore, "consultation", null);
+              storeValue(labsStore, "labs", null);
+              toast({
+                message: "Saved successfully.",
+                type: "is-success",
+                dismissible: false,
+                pauseOnHover: true,
+                position: "top-right",
+                duration: 2000,
+              });
               tab = Patient;
             },
-            prepForPOST(visit)
+            prepForPOST(visit),
+            (result) => {
+              console.error(result);
+              toast({
+                message: "An error occurred, please try again.",
+                type: "is-success",
+                dismissible: false,
+                pauseOnHover: true,
+                position: "top-right",
+                duration: 2000,
+              });
+            }
           );
         }}
       >

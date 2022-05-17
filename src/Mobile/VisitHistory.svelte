@@ -45,10 +45,10 @@
         class="list has-visible-pointer-controls has-hoverable-list-items has-overflow-ellipsis"
       >
         {#each records as record}
-          <div class="list-item">
+          <div class="list-item no-padding">
             <div class="list-item-content">
               <div class="list-item-title">
-                {toDateString(record.creation_time)}
+                {toDateString(record.creation_time, true)}
               </div>
               <div class="list-item-description">
                 {record.visit_type} visit @ {record.facility.name}

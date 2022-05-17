@@ -6,12 +6,14 @@
     mdiStar,
     mdiWindowClose,
   } from "@mdi/js";
+  import { marked } from "marked";
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
   import StarRating from "svelte-star-rating";
 
   import { getValue } from "./common-stores";
-  import type {
+  import {
+    EncounterClass,
     ICD10,
     Observation,
     Prescription,
@@ -37,7 +39,8 @@
     accuracyRating = 0,
     completenessRating = 0,
     accuracyRatingBuffer,
-    completenessRatingBuffer;
+    completenessRatingBuffer,
+    observationNotes = [];
 
   onMount(async () => {
     bulma();
@@ -61,6 +64,10 @@
       paidTotal = chargeableItems
         .filter((x) => x.is_paid)
         .reduce((acc, x) => acc + x.quantity * (x.unit_price || 0), 0);
+
+      observationNotes = visit.encounters
+        .filter((x) => x.type == EncounterClass.ObservationEncounter)
+        .map((x) => x.clinical_notes);
 
       events.push({
         name: "Visit Start",
@@ -191,6 +198,13 @@
 
     <!--Diagnoses-->
     <div class="divider">Diagnoses</div>
+    <div class="box">
+      {@html marked(
+        visit.encounters.filter(
+          (x) => x.type != EncounterClass.ObservationEncounter
+        )[0].clinical_notes
+      )}
+    </div>
     <div
       class="list has-overflow-ellipsis has-hoverable-list-items has-visible-pointer-controls"
     >
@@ -220,6 +234,11 @@
 
     <!--Observations-->
     <div class="divider">Observations & Labs</div>
+    {#each observationNotes as note}
+      <div class="box">
+        {@html marked(note)}
+      </div>
+    {/each}
     <div
       class="list has-overflow-ellipsis has-hoverable-list-items has-visible-pointer-controls"
     >
@@ -395,7 +414,7 @@
           </div>
         </div>
         <div class="field">
-          <label class="label" for="recordReview">Notes</label>
+          <label class="label" for="recordReview">Review</label>
           <div class="control">
             <textarea
               bind:value={review}

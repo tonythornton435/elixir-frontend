@@ -264,7 +264,7 @@
             <div class="list-item">
               <div class="list-item-content">
                 <div class="list-item-title">
-                  {toDateString(record.creation_time)}
+                  {toDateString(record.creation_time, true)}
                 </div>
                 <div class="list-item-description">
                   {record.visit_type} visit @ {record.facility.name}
@@ -302,7 +302,7 @@
                       <span>View</span>
                     </button>
                   {:else if record.access_status == "PENDING"}
-                    <button class="button" on:click={() => {}}>
+                    <button class="button">
                       <span class="icon is-small">
                         <Icon path={mdiEyeRefresh} />
                       </span>
@@ -350,7 +350,7 @@
                           <section class="modal-card-body">
                             <div class="field">
                               <!-- svelte-ignore a11y-label-has-associated-control -->
-                              <label class="label">Request Notes</label>
+                              <label class="label">Access Reason(s)</label>
                               <div class="box">
                                 {@html marked(request_note)}
                               </div>

@@ -1,25 +1,19 @@
 <script lang="ts">
   import { mdiExitRun } from "@mdi/js";
   import Icon from "mdi-svelte";
-  import QRCode from "qrcode";
-  import { onMount } from "svelte";
+  import { afterUpdate, onMount } from "svelte";
   import { get } from "svelte/store";
 
-  import { userStore } from "../common-stores";
-  import { apiCall, logout, toDateString } from "../utils";
+  import { storeValue, userStore, visitRecordStore } from "../common-stores";
+  import Visit from "../Visit.svelte";
+  import { apiCall, bulma, logout, toDateString } from "../utils";
 
-  let accessRequests = [];
+  export let tab = this;
 
-  onMount(async () => {
-    let user = await get(userStore);
-    QRCode.toCanvas(
-      document.getElementById("qr-code"),
-      user["user"]["uuid"],
-      function (error) {
-        if (error) console.error(error);
-      }
-    );
+  let accessRequests = [],
+    user;
 
+  async function updateRequests() {
     await apiCall(
       `index/records/users/${user["user"]["uuid"]}/consent/`,
       "GET",
@@ -28,10 +22,43 @@
         console.log(result);
       }
     );
+  }
+
+  async function updateRequestStatus(accessRequestUUID, to_state) {
+    await apiCall(
+      `index/records/consent/${accessRequestUUID}/update/`,
+      "POST",
+      (result) => {
+        updateRequests();
+        console.log(result);
+      },
+      {
+        to_state,
+      }
+    );
+  }
+
+  async function viewRecord(recordUUID) {
+    await apiCall(`index/records/${recordUUID}/`, "GET", (result) => {
+      let visitRecord = result["data"];
+      visitRecord["rating"] = visitRecord["rating"]
+        .split(",")
+        .map((x) => Number.parseFloat(x));
+      storeValue(visitRecordStore, "visit-record", visitRecord);
+      tab = Visit;
+      console.log(result);
+    });
+  }
+
+  onMount(async () => {
+    bulma();
+    user = await get(userStore);
+    updateRequests();
   });
+  afterUpdate(bulma);
 </script>
 
-{#await $userStore then user}
+{#if user}
   <div class="container is-fluid mt-6">
     <div class="columns is-flex is-centered">
       <figure class="image">
@@ -55,21 +82,13 @@
       </button>
     </div>
 
-    <!--ID-->
-    <div class="columns is-flex is-centered mb-0">
-      <canvas id="qr-code" style="width:256px;height:256px;" />
-    </div>
-    <p class="has-text-centered is-size-7">
-      {user["user"]["uuid"]}
-    </p>
-
     <!--Access Requests-->
     <p class="is-size-4 mt-2">Access Requests</p>
     <div
       class="list has-visible-pointer-controls has-hoverable-list-items has-overflow-ellipsis"
     >
       {#each accessRequests as accessRequest}
-        <div class="list-item">
+        <div class="list-item no-padding">
           <div class="list-item-content">
             <div class="list-item-title">
               {toDateString(accessRequest.created, true)}
@@ -84,18 +103,79 @@
           <div class="list-item-controls">
             {#if accessRequest.status == "PENDING"}
               <div class="tags are-normal">
-                <span class="tag is-info">PENDING</span>
-                <span class="tag is-dark">Doc</span>
+                <span
+                  class="tag is-info js-modal-trigger"
+                  data-target={`access-approval-modal-${accessRequest.uuid}`}
+                  >PENDING</span
+                >
+                <span
+                  class="tag is-dark"
+                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                >
+              </div>
+              <div
+                class="modal"
+                id={`access-approval-modal-${accessRequest.uuid}`}
+              >
+                <div class="modal-background" />
+                <div class="modal-card">
+                  <header class="modal-card-head">
+                    <p class="modal-card-title">Confirm</p>
+                    <button class="delete" aria-label="close" />
+                  </header>
+                  <section class="modal-card-body">Approve access?</section>
+                  <footer class="modal-card-foot">
+                    <button
+                      class="button is-success"
+                      on:click={async () =>
+                        updateRequestStatus(accessRequest.uuid, "APPROVED")}
+                      >Approve</button
+                    >
+                    <button class="button">Cancel</button>
+                  </footer>
+                </div>
               </div>
             {:else if accessRequest.status == "APPROVED"}
               <div class="tags are-normal">
-                <span class="tag is-success">GRANTED</span>
-                <span class="tag is-dark">Doc</span>
+                <span
+                  class="tag is-success js-modal-trigger"
+                  data-target={`access-withdrawal-modal-${accessRequest.uuid}`}
+                  >GRANTED</span
+                >
+                <span
+                  class="tag is-dark"
+                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                >
+                <div
+                  class="modal"
+                  id={`access-withdrawal-modal-${accessRequest.uuid}`}
+                >
+                  <div class="modal-background" />
+                  <div class="modal-card">
+                    <header class="modal-card-head">
+                      <p class="modal-card-title">Confirm</p>
+                      <button class="delete" aria-label="close" />
+                    </header>
+                    <section class="modal-card-body">Withdraw access?</section>
+                    <footer class="modal-card-foot">
+                      <button
+                        class="button is-success"
+                        on:click={async () =>
+                          updateRequestStatus(accessRequest.uuid, "WITHDRAWN")}
+                        >Withdraw</button
+                      >
+                      <button class="button">Cancel</button>
+                    </footer>
+                  </div>
+                </div>
               </div>
             {:else}
               <div class="tags are-normal">
                 <span class="tag is-warning">WITHDRAWN</span>
-                <span class="tag is-dark">Doc</span>
+                <span
+                  class="tag is-dark"
+                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                >
               </div>
             {/if}
           </div>
@@ -103,4 +183,4 @@
       {/each}
     </div>
   </div>
-{/await}
+{/if}

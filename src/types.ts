@@ -74,7 +74,7 @@ export interface ChargeableItem extends ID {
   is_paid: boolean;
 }
 
-interface HCPCS extends ID {
+export interface HCPCS extends ID {
   code: string;
   description: string;
   status_code: string;
@@ -84,7 +84,7 @@ export interface Service extends ChargeableItem {
   item: HCPCS;
 }
 
-interface RxTerm extends ID {
+export interface RxTerm extends ID {
   code: string;
   name: string;
   route: string;
