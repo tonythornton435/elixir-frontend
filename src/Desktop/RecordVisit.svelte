@@ -57,7 +57,7 @@
 
   let patient,
     practitioner,
-    author_id,
+    authorID,
     visit: Visit,
     visitStarted = false,
     consultation: Encounter = structuredClone(encounterDefaults),
@@ -68,7 +68,8 @@
     selectedMeasurement: LOINC,
     availableMeasurements: LOINC[] = [],
     billTotal = 0,
-    paidTotal = 0;
+    paidTotal = 0,
+    facilityBaseUrl = "";
 
   $: {
     chargeableItems = [
@@ -89,16 +90,18 @@
     bulma();
     patient = await getValue("patient");
     practitioner = await getValue("practitioner");
-    author_id = practitioner["extra"]["latest_tenure"]["uuid"];
+    authorID = practitioner["latest_tenure"]["uuid"];
+    facilityBaseUrl = practitioner["latest_tenure"]["facility"]["api_base_url"];
+
     if (patient === null) {
       tab = Patient;
     }
 
-    visit = (await getValue("visit")) || visitDefaults;
+    visit = (await getValue("visit")) || structuredClone(visitDefaults);
     if (consultation.author_id === null) {
-      consultation.author_id = author_id;
-      labs.author_id = author_id;
-      nurseMeasurements.author_id = author_id;
+      consultation.author_id = authorID;
+      labs.author_id = authorID;
+      nurseMeasurements.author_id = authorID;
     }
     visitStarted = visit.type != null;
     consultation = (await getValue("consultation")) || consultation;
@@ -111,7 +114,7 @@
       (observation) => observation.loinc.code
     );
     await apiCall(
-      "facility/loinc/arrival-measurements/",
+      facilityBaseUrl + "facility/loinc/arrival-measurements/",
       "GET",
       (result) => (availableMeasurements = result["data"])
     );
@@ -119,10 +122,11 @@
       (measurement) => !observedCodes.includes(measurement.code)
     );
     await apiCall(
-      "facility/hcpcs/consultation-codes/",
+      facilityBaseUrl + "facility/hcpcs/consultation-codes/",
       "GET",
       (result) => (consultationCodes = result["data"])
     );
+    console.log(consultationCodes);
   });
   afterUpdate(bulma);
 
@@ -238,7 +242,7 @@
       <form
         on:submit|preventDefault={() => {
           visit.patient_id = patient.uuid;
-          visit.facility_id = "d4766983-fcd2-436c-8be8-5b1c1ffa3e75"; // TODO
+          visit.facility_id = practitioner["latest_tenure"]["facility"]["uuid"];
           visit.start = new Date();
           storeValue(visitStore, "visit", visit);
           visitStarted = true;
@@ -283,13 +287,13 @@
           <button
             class="button is-warning"
             on:click={() => {
-              visit = null;
+              visit = structuredClone(visitDefaults);
               storeValue(visitStore, "visit", null);
-              nurseMeasurements = null;
+              nurseMeasurements = structuredClone(encounterDefaults);
               storeValue(nurseMeasurementsStore, "nurse-measurements", null);
-              consultation = null;
+              consultation = structuredClone(encounterDefaults);
               storeValue(consultationStore, "consultation", null);
-              labs = null;
+              labs = structuredClone(encounterDefaults);
               storeValue(labsStore, "labs", null);
               tab = Patient;
             }}
@@ -304,8 +308,6 @@
     </div>
 
     <div id="measurementsTab-content" class="is-hidden">
-      <p class="has-text-weight-bold">Past records</p>
-      <br />
       <div class="field">
         <label class="label" for="selectMeasurement">
           Pick measurement to add
@@ -368,9 +370,10 @@
             visit.type == VisitType.Inpatient
               ? EncounterClass.InpatientEncounter
               : EncounterClass.Ambulatory;
-          let consultationItem = VisitType.Outpatient
-            ? consultationCodes[0]
-            : consultationCodes[1];
+          let consultationItem =
+            visit.type == VisitType.Outpatient
+              ? consultationCodes[0]
+              : consultationCodes[1];
           consultation.services.push({
             item: consultationItem,
             unit_price: null,
@@ -501,7 +504,7 @@
               on:click={async () => {
                 searchingLOINC = true;
                 await apiCall(
-                  "facility/loinc/search/",
+                  facilityBaseUrl + "facility/loinc/search/",
                   "POST",
                   (result) => {
                     LOINCs = result["data"];
@@ -565,7 +568,7 @@
               on:click={async () => {
                 searchingICD10 = true;
                 await apiCall(
-                  "facility/icd10/search/",
+                  facilityBaseUrl + "facility/icd10/search/",
                   "POST",
                   (result) => {
                     ICD10s = result["data"];
@@ -693,7 +696,7 @@
               on:click={async () => {
                 searchingHCPCS = true;
                 await apiCall(
-                  "facility/hcpcs/search/",
+                  facilityBaseUrl + "facility/hcpcs/search/",
                   "POST",
                   (result) => {
                     HCPCSs = result["data"];
@@ -782,7 +785,7 @@
               on:click={async () => {
                 searchingRxTerm = true;
                 await apiCall(
-                  "facility/rxterm/search/",
+                  facilityBaseUrl + "facility/rxterm/search/",
                   "POST",
                   (result) => {
                     RxTerms = result["data"];
@@ -1114,7 +1117,7 @@
           visit["encounters"] = [nurseMeasurements, consultation, labs];
 
           await apiCall(
-            "facility/visits/new/",
+            facilityBaseUrl + "facility/visits/new/",
             "POST",
             async (result) => {
               let visit = result["data"];

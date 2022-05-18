@@ -15,6 +15,7 @@
   import Icon from "mdi-svelte";
   import { link, push } from "svelte-spa-router";
 
+  import { INDEX_API_BASE_URL } from "./constants";
   import { apiCall } from "./utils";
 
   let email: string,
@@ -41,7 +42,7 @@
       if (!passwordsMatch) return;
 
       await apiCall(
-        "auth/register/",
+        INDEX_API_BASE_URL + "auth/register/",
         "POST",
         (result) => {
           push("/login");

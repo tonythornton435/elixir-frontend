@@ -3,6 +3,7 @@
   import { link, replace } from "svelte-spa-router";
 
   import { getValue, storeValue, userStore } from "../common-stores";
+  import { INDEX_API_BASE_URL } from "../constants";
   import Patient from "./Patient.svelte";
   import RecordVisit from "./RecordVisit.svelte";
   import { practitionerStore } from "./stores";
@@ -18,7 +19,7 @@
     practitioner = await getValue("practitioner");
     if (practitioner == null) {
       apiCall(
-        `index/practitioners/${user["user"]["uuid"]}/`,
+        INDEX_API_BASE_URL + `index/practitioners/${user["user"]["uuid"]}/`,
         "GET",
         (result) => {
           practitioner = result["data"];
@@ -41,7 +42,7 @@
         <a class="navbar-item has-text-weight-bold" href="/" use:link>
           Elixir
           {#if practitioner}
-            @ {practitioner["extra"]["latest_tenure"]["facility"]["name"]}
+            @ {practitioner["latest_tenure"]["facility"]["name"]}
           {/if}
         </a>
       </div>
@@ -52,7 +53,7 @@
             {user["user"]["first_name"]}
             {user["user"]["last_name"]}
             {#if practitioner}
-              - {practitioner["extra"]["type"]}
+              - {practitioner["type"]}
             {/if}
           </div>
           <div class="navbar-item">
@@ -97,17 +98,6 @@
                 </li>
               </ul>
             </li>
-          </ul>
-          <p class="menu-label">Statistics</p>
-          <ul class="menu-list">
-            <!-- svelte-ignore a11y-missing-attribute -->
-            <li><a>Visits</a></li>
-            <!-- svelte-ignore a11y-missing-attribute -->
-            <li><a>Diagnoses</a></li>
-            <!-- svelte-ignore a11y-missing-attribute -->
-            <li><a>Prescriptions</a></li>
-            <!-- svelte-ignore a11y-missing-attribute -->
-            <li><a>Billing</a></li>
           </ul>
           <p
             class="menu-label is-clickable"

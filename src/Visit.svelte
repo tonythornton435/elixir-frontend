@@ -12,6 +12,7 @@
   import StarRating from "svelte-star-rating";
 
   import { getValue } from "./common-stores";
+  import { INDEX_API_BASE_URL } from "./constants";
   import {
     EncounterClass,
     ICD10,
@@ -40,101 +41,108 @@
     completenessRating = 0,
     accuracyRatingBuffer,
     completenessRatingBuffer,
-    observationNotes = [];
+    observationNotes = [],
+    practitioner;
 
   onMount(async () => {
     bulma();
     visitRecord = await getValue("visit-record");
     user = await getValue("user");
-    apiCall(`facility/visits/${visitRecord["uuid"]}/`, "GET", (result) => {
-      visit = result["data"];
-      console.log(visit);
+    practitioner = await getValue("practitioner");
+    apiCall(
+      practitioner["latest_tenure"]["facility"]["api_base_url"] +
+        `facility/visits/${visitRecord["uuid"]}/`,
+      "GET",
+      (result) => {
+        visit = result["data"];
+        console.log(visit);
 
-      diagnoses = [visit.primary_diagnosis, ...visit.secondary_diagnoses];
-      for (let encounter of visit.encounters) {
-        labs = [...labs, ...encounter.observations];
-        prescriptions = [...prescriptions, ...encounter.prescriptions];
-        services = [...services, ...encounter.services];
-      }
-      let chargeableItems = [...labs, ...prescriptions, ...services];
-      billTotal = chargeableItems.reduce(
-        (acc, x) => acc + x.quantity * (x.unit_price || 0),
-        0
-      );
-      paidTotal = chargeableItems
-        .filter((x) => x.is_paid)
-        .reduce((acc, x) => acc + x.quantity * (x.unit_price || 0), 0);
+        diagnoses = [visit.primary_diagnosis, ...visit.secondary_diagnoses];
+        for (let encounter of visit.encounters) {
+          labs = [...labs, ...encounter.observations];
+          prescriptions = [...prescriptions, ...encounter.prescriptions];
+          services = [...services, ...encounter.services];
+        }
+        let chargeableItems = [...labs, ...prescriptions, ...services];
+        billTotal = chargeableItems.reduce(
+          (acc, x) => acc + x.quantity * (x.unit_price || 0),
+          0
+        );
+        paidTotal = chargeableItems
+          .filter((x) => x.is_paid)
+          .reduce((acc, x) => acc + x.quantity * (x.unit_price || 0), 0);
 
-      observationNotes = visit.encounters
-        .filter((x) => x.type == EncounterClass.ObservationEncounter)
-        .map((x) => x.clinical_notes);
+        observationNotes = visit.encounters
+          .filter((x) => x.type == EncounterClass.ObservationEncounter)
+          .map((x) => x.clinical_notes);
 
-      events.push({
-        name: "Visit Start",
-        timestamp: toDateString(visit.start, true),
-        rawDate: new Date(visit.start),
-        color: "is-info",
-      });
-      events.push({
-        name: "Visit End",
-        timestamp: toDateString(visit.end, true),
-        rawDate: new Date(visit.end),
-        color: "is-info",
-      });
-      for (let encounter of visit.encounters) {
         events.push({
-          name: `${encounter["type"]} Encounter Started`,
-          timestamp: toDateString(encounter.start, true),
-          rawDate: new Date(encounter.start),
+          name: "Visit Start",
+          timestamp: toDateString(visit.start, true),
+          rawDate: new Date(visit.start),
           color: "is-info",
         });
-      }
-      for (let i = 0; i < visitRecord["consent_requests"].length; i++) {
-        let access_request = visitRecord["consent_requests"][i];
         events.push({
-          name: `${access_request["requestor"]["practitioner"]["user"]["first_name"]} ${access_request["requestor"]["practitioner"]["user"]["last_name"]} from ${access_request["requestor"]["facility"]["name"]} requested access, "${access_request["request_note"]}" (ID: ${i})`,
-          timestamp: toDateString(access_request["created"], true),
-          rawDate: new Date(access_request["created"]),
-          color: "is-warning",
+          name: "Visit End",
+          timestamp: toDateString(visit.end, true),
+          rawDate: new Date(visit.end),
+          color: "is-info",
         });
-        for (let log of access_request["transition_logs"]) {
+        for (let encounter of visit.encounters) {
           events.push({
-            name: `Access Request ${i}: ${log["to_state"]}`,
-            timestamp: toDateString(log["transition_time"], true),
-            rawDate: new Date(log["transition_time"]),
-            color: log["to_state"] == "APPROVED" ? "is-success" : "is-danger",
+            name: `${encounter["type"]} Encounter Started`,
+            timestamp: toDateString(encounter.start, true),
+            rawDate: new Date(encounter.start),
+            color: "is-info",
           });
         }
-      }
-      for (let log of visitRecord["access_logs"]) {
-        events.push({
-          name: `Access by ${log["practitioner"]["practitioner"]["user"]["first_name"]} ${log["practitioner"]["practitioner"]["user"]["last_name"]} from ${log["practitioner"]["facility"]["name"]}`,
-          timestamp: toDateString(log["access_time"], true),
-          rawDate: new Date(log["access_time"]),
-          color: "is-info",
-        });
-      }
-      for (let rating of visitRecord["ratings"]) {
-        let overallRating = (rating["accuracy"] + rating["completeness"]) / 2;
-        events.push({
-          name: `${rating["rater"]["first_name"]} ${rating["rater"]["last_name"]} rated ${overallRating}⭐, "${rating["review"]}"`,
-          timestamp: toDateString(rating["created"], true),
-          rawDate: new Date(rating["created"]),
-          color:
-            overallRating >= 4
-              ? "is-success"
-              : overallRating >= 3
-              ? "is-warning"
-              : "is-error",
-        });
-        if (rating["rater"]["uuid"] == user["user"]["uuid"]) {
-          accuracyRating = rating["accuracy"];
-          completenessRating = rating["completeness"];
-          review = rating["review"];
+        for (let i = 0; i < visitRecord["consent_requests"].length; i++) {
+          let access_request = visitRecord["consent_requests"][i];
+          events.push({
+            name: `${access_request["requestor"]["practitioner"]["user"]["first_name"]} ${access_request["requestor"]["practitioner"]["user"]["last_name"]} from ${access_request["requestor"]["facility"]["name"]} requested access, "${access_request["request_note"]}" (ID: ${i})`,
+            timestamp: toDateString(access_request["created"], true),
+            rawDate: new Date(access_request["created"]),
+            color: "is-warning",
+          });
+          for (let log of access_request["transition_logs"]) {
+            events.push({
+              name: `Access Request ${i}: ${log["to_state"]}`,
+              timestamp: toDateString(log["transition_time"], true),
+              rawDate: new Date(log["transition_time"]),
+              color: log["to_state"] == "APPROVED" ? "is-success" : "is-danger",
+            });
+          }
         }
+        for (let log of visitRecord["access_logs"]) {
+          events.push({
+            name: `Access by ${log["practitioner"]["practitioner"]["user"]["first_name"]} ${log["practitioner"]["practitioner"]["user"]["last_name"]} from ${log["practitioner"]["facility"]["name"]}`,
+            timestamp: toDateString(log["access_time"], true),
+            rawDate: new Date(log["access_time"]),
+            color: "is-info",
+          });
+        }
+        for (let rating of visitRecord["ratings"]) {
+          let overallRating = (rating["accuracy"] + rating["completeness"]) / 2;
+          events.push({
+            name: `${rating["rater"]["first_name"]} ${rating["rater"]["last_name"]} rated ${overallRating}⭐, "${rating["review"]}"`,
+            timestamp: toDateString(rating["created"], true),
+            rawDate: new Date(rating["created"]),
+            color:
+              overallRating >= 4
+                ? "is-success"
+                : overallRating >= 3
+                ? "is-warning"
+                : "is-error",
+          });
+          if (rating["rater"]["uuid"] == user["user"]["uuid"]) {
+            accuracyRating = rating["accuracy"];
+            completenessRating = rating["completeness"];
+            review = rating["review"];
+          }
+        }
+        events.sort((a, b) => a["rawDate"] - b["rawDate"]);
       }
-      events.sort((a, b) => a["rawDate"] - b["rawDate"]);
-    });
+    );
     patient = await getValue("patient");
   });
   afterUpdate(bulma);
@@ -345,7 +353,7 @@
       <form
         on:submit|preventDefault={async () => {
           await apiCall(
-            "index/records/ratings/new/",
+            INDEX_API_BASE_URL + "index/records/ratings/new/",
             "POST",
             (result) => {
               console.log(result);

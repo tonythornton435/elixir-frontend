@@ -5,6 +5,7 @@
   import { get } from "svelte/store";
 
   import { storeValue, userStore, visitRecordStore } from "../common-stores";
+  import { INDEX_API_BASE_URL } from "../constants";
   import Visit from "../Visit.svelte";
   import { apiCall, bulma, logout, toDateString } from "../utils";
 
@@ -15,7 +16,8 @@
 
   async function updateRequests() {
     await apiCall(
-      `index/records/users/${user["user"]["uuid"]}/consent/`,
+      INDEX_API_BASE_URL +
+        `index/records/users/${user["user"]["uuid"]}/consent/`,
       "GET",
       (result) => {
         accessRequests = result["data"];
@@ -26,7 +28,7 @@
 
   async function updateRequestStatus(accessRequestUUID, to_state) {
     await apiCall(
-      `index/records/consent/${accessRequestUUID}/update/`,
+      INDEX_API_BASE_URL + `index/records/consent/${accessRequestUUID}/update/`,
       "POST",
       (result) => {
         updateRequests();
@@ -39,15 +41,19 @@
   }
 
   async function viewRecord(recordUUID) {
-    await apiCall(`index/records/${recordUUID}/`, "GET", (result) => {
-      let visitRecord = result["data"];
-      visitRecord["rating"] = visitRecord["rating"]
-        .split(",")
-        .map((x) => Number.parseFloat(x));
-      storeValue(visitRecordStore, "visit-record", visitRecord);
-      tab = Visit;
-      console.log(result);
-    });
+    await apiCall(
+      INDEX_API_BASE_URL + `index/records/${recordUUID}/`,
+      "GET",
+      (result) => {
+        let visitRecord = result["data"];
+        visitRecord["rating"] = visitRecord["rating"]
+          .split(",")
+          .map((x) => Number.parseFloat(x));
+        storeValue(visitRecordStore, "visit-record", visitRecord);
+        tab = Visit;
+        console.log(result);
+      }
+    );
   }
 
   onMount(async () => {
@@ -110,7 +116,8 @@
                 >
                 <span
                   class="tag is-dark"
-                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                  on:click={() => viewRecord(accessRequest.record_id)}
+                  >View</span
                 >
               </div>
               <div
@@ -144,7 +151,8 @@
                 >
                 <span
                   class="tag is-dark"
-                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                  on:click={() => viewRecord(accessRequest.record_id)}
+                  >View</span
                 >
                 <div
                   class="modal"
@@ -174,7 +182,8 @@
                 <span class="tag is-warning">WITHDRAWN</span>
                 <span
                   class="tag is-dark"
-                  on:click={() => viewRecord(accessRequest.record_id)}>View</span
+                  on:click={() => viewRecord(accessRequest.record_id)}
+                  >View</span
                 >
               </div>
             {/if}

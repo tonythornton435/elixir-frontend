@@ -5,6 +5,7 @@
   import StarRating from "svelte-star-rating";
 
   import { getValue, storeValue, visitRecordStore } from "../common-stores";
+  import { INDEX_API_BASE_URL } from "../constants";
   import { apiCall, bulma, toDateString } from "../utils";
   import Visit from "../Visit.svelte";
 
@@ -19,16 +20,20 @@
     user = await getValue("user");
     patient = user.user;
     console.log(patient, user);
-    apiCall(`index/records/users/${patient["uuid"]}/`, "GET", (result) => {
-      records = [];
-      for (let record of result["data"]) {
-        record["rating"] = record["rating"]
-          .split(",")
-          .map((x) => Number.parseFloat(x));
-        records.push(record);
+    apiCall(
+      INDEX_API_BASE_URL + `index/records/users/${patient["uuid"]}/`,
+      "GET",
+      (result) => {
+        records = [];
+        for (let record of result["data"]) {
+          record["rating"] = record["rating"]
+            .split(",")
+            .map((x) => Number.parseFloat(x));
+          records.push(record);
+        }
+        console.log(records);
       }
-      console.log(records);
-    });
+    );
   });
   afterUpdate(bulma);
 </script>

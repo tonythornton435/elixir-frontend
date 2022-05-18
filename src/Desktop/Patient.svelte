@@ -21,6 +21,7 @@
     storeValue,
     visitRecordStore,
   } from "../common-stores";
+  import { INDEX_API_BASE_URL } from "../constants";
   import RecordVisit from "./RecordVisit.svelte";
   import {
     apiCall,
@@ -44,23 +45,27 @@
     bulma();
     patient = await getValue("patient");
     practitioner = await getValue("practitioner");
-    author_id = practitioner["extra"]["latest_tenure"]["uuid"];
+    author_id = practitioner["latest_tenure"]["uuid"];
   });
   afterUpdate(bulma);
 
   $: {
     if (patient && fetch_records) {
-      apiCall(`index/records/users/${patient["uuid"]}`, "GET", (result) => {
-        records = [];
-        for (let record of result["data"]) {
-          record["rating"] = record["rating"]
-            .split(",")
-            .map((x) => Number.parseFloat(x));
-          records.push(record);
+      apiCall(
+        INDEX_API_BASE_URL + `index/records/users/${patient["uuid"]}`,
+        "GET",
+        (result) => {
+          records = [];
+          for (let record of result["data"]) {
+            record["rating"] = record["rating"]
+              .split(",")
+              .map((x) => Number.parseFloat(x));
+            records.push(record);
+          }
+          fetch_records = false;
+          console.log(records);
         }
-        fetch_records = false;
-        console.log(records);
-      });
+      );
     }
   }
 
@@ -79,7 +84,7 @@
       fetch_records = true;
       await delay(2);
       await apiCall(
-        "index/patients/search/",
+        INDEX_API_BASE_URL + "index/patients/search/",
         "POST",
         (result) => {
           patients = result["data"];
@@ -283,7 +288,7 @@
                       on:click={async () => {
                         storeValue(visitRecordStore, "visit-record", record);
                         await apiCall(
-                          "index/records/logs/new/",
+                          INDEX_API_BASE_URL + "index/records/logs/new/",
                           "POST",
                           (result) => {
                             console.log(result);
@@ -327,7 +332,7 @@
                         <form
                           on:submit|preventDefault={async () => {
                             await apiCall(
-                              "index/records/consent/new/",
+                              INDEX_API_BASE_URL + "index/records/consent/new/",
                               "POST",
                               (result) => {
                                 console.log(result);

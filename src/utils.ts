@@ -1,8 +1,6 @@
 import { deleteValue, userStore } from "./common-stores";
 import { get } from "svelte/store";
 
-import { API_BASE_URL } from "./constants";
-
 export async function apiCall(
   endpoint: string,
   method: string,
@@ -30,7 +28,7 @@ export async function apiCall(
     };
   }
 
-  await fetch(API_BASE_URL + endpoint, request).then(async (res) => {
+  await fetch(endpoint, request).then(async (res) => {
     const result = await res.json();
 
     if (result["status"] === "success") successCallback(result);

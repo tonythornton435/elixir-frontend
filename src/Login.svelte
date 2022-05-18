@@ -6,6 +6,7 @@
   import { link, push } from "svelte-spa-router";
 
   import { userStore } from "./common-stores";
+  import { INDEX_API_BASE_URL } from "./constants";
   import { apiCall } from "./utils";
 
   let email: string, password: string;
@@ -15,7 +16,7 @@
   <form
     on:submit|preventDefault={async () => {
       await apiCall(
-        "auth/login/",
+        INDEX_API_BASE_URL + "auth/login/",
         "POST",
         async (result) => {
           userStore.set(Promise.resolve(result["data"]));

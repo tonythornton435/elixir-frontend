@@ -16,6 +16,7 @@
   import Icon from "mdi-svelte";
   import { afterUpdate, onMount } from "svelte";
 
+  import { INDEX_API_BASE_URL } from "../constants";
   import { apiCall, bulma } from "../utils";
 
   export let tab = this;
@@ -25,12 +26,12 @@
     facilities = [],
     practitioners = [];
 
-  apiCall("index/facilities/", "GET", (result) => {
+  apiCall(INDEX_API_BASE_URL + "index/facilities/", "GET", (result) => {
     console.log(result);
     facilities = result["data"];
   });
 
-  apiCall("index/practitioners/", "GET", (result) => {
+  apiCall(INDEX_API_BASE_URL + "index/practitioners/", "GET", (result) => {
     console.log(result);
     practitioners = result["data"];
   });
@@ -41,7 +42,7 @@
   async function handleSearch() {
     searching = true;
     await apiCall(
-      "index/facilities/search/",
+      INDEX_API_BASE_URL + "index/facilities/search/",
       "POST",
       (result) => {
         facilities = result["data"];
@@ -49,7 +50,7 @@
       { query }
     );
     await apiCall(
-      "index/practitioners/search/",
+      INDEX_API_BASE_URL + "index/practitioners/search/",
       "POST",
       (result) => {
         practitioners = result["data"];

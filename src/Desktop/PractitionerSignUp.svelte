@@ -11,6 +11,7 @@
   import { link, push } from "svelte-spa-router";
 
   import { getValue } from "../common-stores";
+  import { INDEX_API_BASE_URL } from "../constants";
   import { apiCall } from "../utils";
 
   let facilities = [],
@@ -21,7 +22,7 @@
 
   onMount(async () => {
     user = await getValue("user");
-    await apiCall("index/facilities/", "GET", (result) => {
+    await apiCall(INDEX_API_BASE_URL + "index/facilities/", "GET", (result) => {
       facilities = result["data"];
     });
   });
@@ -41,7 +42,7 @@
   <form
     on:submit|preventDefault={async () => {
       await apiCall(
-        "index/practitioners/new/",
+        INDEX_API_BASE_URL + "index/practitioners/new/",
         "POST",
         (result) => {
           push("/login");
