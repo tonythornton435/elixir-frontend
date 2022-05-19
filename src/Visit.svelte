@@ -3,6 +3,7 @@
   import {
     mdiCheckAll,
     mdiCheckDecagramOutline,
+    mdiChevronLeft,
     mdiStar,
     mdiWindowClose,
   } from "@mdi/js";
@@ -13,6 +14,7 @@
 
   import { getValue } from "./common-stores";
   import { INDEX_API_BASE_URL } from "./constants";
+  import Patient from "./Desktop/Patient.svelte";
   import {
     EncounterClass,
     ICD10,
@@ -22,6 +24,7 @@
     Visit,
   } from "./types";
   import { apiCall, bulma, toDateString } from "./utils";
+  import VisitHistory from "./Mobile/VisitHistory.svelte";
 
   export let tab = this;
 
@@ -41,16 +44,14 @@
     completenessRating = 0,
     accuracyRatingBuffer,
     completenessRatingBuffer,
-    observationNotes = [],
-    practitioner;
+    observationNotes = [];
 
   onMount(async () => {
     bulma();
     visitRecord = await getValue("visit-record");
     user = await getValue("user");
-    practitioner = await getValue("practitioner");
     apiCall(
-      practitioner["latest_tenure"]["facility"]["api_base_url"] +
+      visitRecord["facility"]["api_base_url"] +
         `facility/visits/${visitRecord["uuid"]}/`,
       "GET",
       (result) => {
@@ -155,6 +156,22 @@
     class:mx-1={Capacitor.isNativePlatform()}
     class:mb-6={Capacitor.isNativePlatform()}
   >
+    <p
+      class="is-size-4"
+      class:mt-2={Capacitor.isNativePlatform()}
+      style="line-height: 32px;"
+      on:click={() => {
+        if (Capacitor.isNativePlatform()) {
+          tab = VisitHistory;
+        } else {
+          tab = Patient;
+        }
+      }}
+    >
+      <span class="is-clickable"
+        ><Icon path={mdiChevronLeft} size="32px" /> Back</span
+      >
+    </p>
     <!-- Visit Particulars -->
     <div class="divider">Visit Particulars</div>
     <table class="table is-striped is-hoverable is-fullwidth">

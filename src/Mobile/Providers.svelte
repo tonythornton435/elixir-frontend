@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     mdiBaby,
+    mdiDoctor,
     mdiEmail,
     mdiEmailFast,
     mdiFlask,
@@ -24,16 +25,18 @@
   let query: string,
     searching = false,
     facilities = [],
-    practitioners = [];
+    practitioners = [],
+    allActive = true,
+    facilitiesActive = false,
+    practitionersActive = false;
 
   apiCall(INDEX_API_BASE_URL + "index/facilities/", "GET", (result) => {
-    console.log(result);
     facilities = result["data"];
   });
 
   apiCall(INDEX_API_BASE_URL + "index/practitioners/", "GET", (result) => {
-    console.log(result);
     practitioners = result["data"];
+    console.log(practitioners);
   });
 
   onMount(bulma);
@@ -89,89 +92,182 @@
     </div>
     <p class="panel-tabs">
       <!-- svelte-ignore a11y-missing-attribute -->
-      <a class="is-active">All</a>
+      <a
+        class:is-active={allActive}
+        on:click={() => {
+          allActive = true;
+          facilitiesActive = false;
+          practitionersActive = false;
+        }}>All</a
+      >
       <!-- svelte-ignore a11y-missing-attribute -->
-      <a>Clinics</a>
+      <a
+        class:is-active={facilitiesActive}
+        on:click={() => {
+          allActive = false;
+          facilitiesActive = true;
+          practitionersActive = false;
+        }}>Facilities</a
+      >
       <!-- svelte-ignore a11y-missing-attribute -->
-      <a>Practitioners</a>
-      <!-- svelte-ignore a11y-missing-attribute -->
-      <a>Pharmacies</a>
-      <!-- svelte-ignore a11y-missing-attribute -->
-      <a>Labs</a>
-      <!-- svelte-ignore a11y-missing-attribute -->
-      <a>Other</a>
+      <a
+        class:is-active={practitionersActive}
+        on:click={() => {
+          allActive = false;
+          facilitiesActive = false;
+          practitionersActive = true;
+        }}>Practitioners</a
+      >
     </p>
     {#if facilities.length + practitioners.length > 0 || !searching}
-      {#each facilities as facility}
-        <div id={facility["uuid"]} class="modal">
-          <div class="modal-background" />
-          <div class="modal-card">
-            <header class="modal-card-head">
-              <p class="modal-card-title">{facility["name"]} Contact Details</p>
-              <button class="delete" aria-label="close" />
-            </header>
-            <section class="modal-card-body">
-              <span class="icon-text is-italic">
-                <span class="icon">
-                  <Icon path={mdiEmailFast} />
+      {#if allActive || facilitiesActive}
+        {#each facilities as facility}
+          <div id={facility["uuid"]} class="modal">
+            <div class="modal-background" />
+            <div class="modal-card">
+              <header class="modal-card-head">
+                <p class="modal-card-title">
+                  {facility["name"]} Contact Details
+                </p>
+                <button class="delete" aria-label="close" />
+              </header>
+              <section class="modal-card-body">
+                <span class="icon-text is-italic">
+                  <span class="icon">
+                    <Icon path={mdiEmailFast} />
+                  </span>
+                  <span>{facility["address"]}</span>
                 </span>
-                <span>{facility["address"]}</span>
-              </span>
-              <br />
-              <span class="icon-text is-italic">
-                <span class="icon">
-                  <Icon path={mdiMapMarker} />
+                <br />
+                <span class="icon-text is-italic">
+                  <span class="icon">
+                    <Icon path={mdiMapMarker} />
+                  </span>
+                  <span>{facility["location"]}, {facility["county"]}</span>
                 </span>
-                <span>{facility["location"]}, {facility["county"]}</span>
-              </span>
-              <br />
-              <span class="icon-text">
-                <span class="icon">
-                  <Icon path={mdiPhone} />
+                <br />
+                <span class="icon-text">
+                  <span class="icon">
+                    <Icon path={mdiPhone} />
+                  </span>
+                  <span>{facility["phone_number"]}</span>
                 </span>
-                <span>{facility["phone_number"]}</span>
-              </span>
-              <br />
-              <span class="icon-text">
-                <span class="icon">
-                  <Icon path={mdiEmail} />
+                <br />
+                <span class="icon-text">
+                  <span class="icon">
+                    <Icon path={mdiEmail} />
+                  </span>
+                  <span>{facility["email"]}</span>
                 </span>
-                <span>{facility["email"]}</span>
-              </span>
-            </section>
-            <footer class="modal-card-foot">
-              <button class="button is-link">
-                <span class="icon is-small">
-                  <Icon path={mdiThumbUpOutline} />
-                </span>
-                <span>Got it!</span>
-              </button>
-            </footer>
+              </section>
+              <footer class="modal-card-foot">
+                <button class="button is-link">
+                  <span class="icon is-small">
+                    <Icon path={mdiThumbUpOutline} />
+                  </span>
+                  <span>Got it!</span>
+                </button>
+              </footer>
+            </div>
           </div>
-        </div>
-        <!-- svelte-ignore a11y-missing-attribute -->
-        <a class="panel-block js-modal-trigger" data-target={facility["uuid"]}>
-          <span class="icon-text">
-            <span class="icon">
-              {#if facility["type"] == "MBL"}
-                <Icon path={mdiFlask} />
-              {:else if facility["type"] == "PHARM"}
-                <Icon path={mdiPill} />
-              {:else if facility["type"] == "PEDC"}
-                <Icon path={mdiBaby} />
-              {:else if facility["type"] == "OPTC"}
-                <Icon path={mdiGlasses} />
-              {:else if facility["type"] == "DENT"}
-                <Icon path={mdiTooth} />
-              {:else}
-                <!--HOSP, PSY, RH-->
-                <Icon path={mdiHospitalBuilding} />
-              {/if}
+          <!-- svelte-ignore a11y-missing-attribute -->
+          <a
+            class="panel-block js-modal-trigger"
+            data-target={facility["uuid"]}
+          >
+            <span class="icon-text">
+              <span class="icon">
+                {#if facility["type"] == "MBL"}
+                  <Icon path={mdiFlask} />
+                {:else if facility["type"] == "PHARM"}
+                  <Icon path={mdiPill} />
+                {:else if facility["type"] == "PEDC"}
+                  <Icon path={mdiBaby} />
+                {:else if facility["type"] == "OPTC"}
+                  <Icon path={mdiGlasses} />
+                {:else if facility["type"] == "DENT"}
+                  <Icon path={mdiTooth} />
+                {:else}
+                  <!--HOSP, PSY, RH-->
+                  <Icon path={mdiHospitalBuilding} />
+                {/if}
+              </span>
+              <span>{facility["name"]}</span>
             </span>
-            <span>{facility["name"]}</span>
-          </span>
-        </a>
-      {/each}
+          </a>
+        {/each}
+      {/if}
+
+      {#if allActive || practitionersActive}
+        {#each practitioners as practitioner}
+          <div id={practitioner["uuid"]} class="modal">
+            <div class="modal-background" />
+            <div class="modal-card">
+              <header class="modal-card-head">
+                <p class="modal-card-title">
+                  {practitioner["user"]["first_name"]}
+                  {practitioner["user"]["last_name"]} Contact Details
+                </p>
+                <button class="delete" aria-label="close" />
+              </header>
+              <section class="modal-card-body">
+                <span class="icon-text is-italic">
+                  <span class="icon">
+                    <Icon path={mdiDoctor} />
+                  </span>
+                  <span>{practitioner["type"]}</span>
+                </span>
+                <br />
+                <span class="icon-text is-italic">
+                  <span class="icon">
+                    <Icon path={mdiMapMarker} />
+                  </span>
+                  <span
+                    >{practitioner["latest_tenure"]["facility"]["name"]}</span
+                  >
+                </span>
+                <br />
+                <span class="icon-text">
+                  <span class="icon">
+                    <Icon path={mdiPhone} />
+                  </span>
+                  <span>{practitioner["user"]["phone_number"]}</span>
+                </span>
+                <br />
+                <span class="icon-text">
+                  <span class="icon">
+                    <Icon path={mdiEmail} />
+                  </span>
+                  <span>{practitioner["user"]["email"]}</span>
+                </span>
+              </section>
+              <footer class="modal-card-foot">
+                <button class="button is-link">
+                  <span class="icon is-small">
+                    <Icon path={mdiThumbUpOutline} />
+                  </span>
+                  <span>Got it!</span>
+                </button>
+              </footer>
+            </div>
+          </div>
+          <!-- svelte-ignore a11y-missing-attribute -->
+          <a
+            class="panel-block js-modal-trigger"
+            data-target={practitioner["uuid"]}
+          >
+            <span class="icon-text">
+              <span class="icon">
+                <Icon path={mdiDoctor} />
+              </span>
+              <span
+                >{practitioner["user"]["first_name"]}
+                {practitioner["user"]["last_name"]}</span
+              >
+            </span>
+          </a>
+        {/each}
+      {/if}
     {:else}
       <div class="w-full">
         <div class="flex items-center justify-center">

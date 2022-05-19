@@ -18,7 +18,6 @@ export async function apiCall(
   request["headers"] = new Headers(headers);
 
   if (body) {
-    console.log(body);
     request["body"] = JSON.stringify(body);
   }
 

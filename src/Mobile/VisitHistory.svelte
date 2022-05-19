@@ -38,13 +38,11 @@
   afterUpdate(bulma);
 </script>
 
+<nav class="panel">
+  <p class="panel-heading">Past Records</p>
+</nav>
 <div class="is-fluid">
   {#if patient}
-    <h1 class="is-family-monospace is-uppercase mt-1 mb-1">
-      {patient["first_name"]}
-      {patient["last_name"]}
-    </h1>
-
     <div class="column is-12">
       <div
         class="list has-visible-pointer-controls has-hoverable-list-items has-overflow-ellipsis"

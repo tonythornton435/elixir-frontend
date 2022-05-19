@@ -5,10 +5,10 @@
   import { wrap } from "svelte-spa-router/wrap";
 
   import AccessDenied from "./AccessDenied.svelte";
+  import { getValue } from "./common-stores";
   import Login from "./Login.svelte";
   import NotFound from "./NotFound.svelte";
   import SignUp from "./SignUp.svelte";
-  import { getValue } from "./common-stores";
   import type { Token } from "./types";
 
   import "../node_modules/bulma/css/bulma.min.css";
