@@ -2,7 +2,7 @@
 
 Frontend for a distributed electronic health records system.
 
-The backend's [here](https://github.com/st3v3nmw/elixir-backend).
+The backend's [here](https://github.com/tonythornton435/elixir-backend).
 
 ## Screenshots
 
